@@ -1,0 +1,1 @@
+CREATE POLICY "sellers_public_select" ON public.sellers FOR SELECT TO anon USING (true);
