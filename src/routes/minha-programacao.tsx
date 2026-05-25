@@ -26,7 +26,7 @@ export const Route = createFileRoute("/minha-programacao")({
   component: MinhaProgramacao,
   head: () => ({
     meta: [
-      { title: "Minha Programação — Arena Fanáticos" },
+      { title: "Minha Programação — Arena United" },
       { name: "description", content: "Agenda individual de entrevistas do vendedor." },
     ],
   }),

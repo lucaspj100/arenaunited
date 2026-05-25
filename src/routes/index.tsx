@@ -24,7 +24,7 @@ export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
-      { title: "Arena Fanáticos — Ranking da equipe" },
+      { title: "Arena United — Ranking da equipe" },
       { name: "description", content: "Ranking compartilhado da equipe com metas individuais e leaderboard em tempo real." },
     ],
   }),
@@ -140,7 +140,7 @@ function Index() {
             <Trophy className="size-6 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="font-display font-black text-2xl md:text-3xl leading-none">Arena Fanáticos</h1>
+            <h1 className="font-display font-black text-2xl md:text-3xl leading-none">Arena United</h1>
             <p className="text-xs text-muted-foreground mt-1">Leaderboard da equipe · {config.period}</p>
           </div>
         </div>

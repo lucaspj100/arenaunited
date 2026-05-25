@@ -45,7 +45,7 @@ export const Route = createFileRoute("/agenda-equipe")({
   component: AgendaEquipe,
   head: () => ({
     meta: [
-      { title: "Agenda da Equipe — Arena Fanáticos" },
+      { title: "Agenda da Equipe — Arena United" },
       { name: "description", content: "Programação completa da equipe comercial." },
     ],
   }),

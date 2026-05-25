@@ -34,7 +34,7 @@ export const Route = createFileRoute("/minhas-comissoes")({
   component: MinhasComissoes,
   head: () => ({
     meta: [
-      { title: "Minhas Comissões — Arena Fanáticos" },
+      { title: "Minhas Comissões — Arena United" },
       { name: "description", content: "Cadastre matrículas e acompanhe sua comissão e premiação." },
     ],
   }),
