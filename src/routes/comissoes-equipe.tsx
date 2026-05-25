@@ -34,7 +34,7 @@ export const Route = createFileRoute("/comissoes-equipe")({
   component: ComissoesEquipe,
   head: () => ({
     meta: [
-      { title: "Comissões da Equipe — Arena Fanáticos" },
+      { title: "Comissões da Equipe — Arena United" },
       { name: "description", content: "Dashboard administrativo de comissões e premiações da equipe." },
     ],
   }),

@@ -6,7 +6,7 @@ import { Loader2, LogIn, Trophy } from "lucide-react";
 export const Route = createFileRoute("/login")({
   component: LoginPage,
   head: () => ({
-    meta: [{ title: "Entrar — Arena Fanáticos" }],
+    meta: [{ title: "Entrar — Arena United" }],
   }),
 });
 
@@ -41,7 +41,7 @@ function LoginPage() {
             <Trophy className="size-5 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="font-display font-black text-xl leading-none">Arena Fanáticos</h1>
+            <h1 className="font-display font-black text-xl leading-none">Arena United</h1>
             <p className="text-[11px] text-muted-foreground mt-0.5">Acesso da equipe</p>
           </div>
         </div>
