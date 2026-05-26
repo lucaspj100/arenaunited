@@ -246,7 +246,16 @@ function Index() {
           </div>
           <div className="group/brand relative">
             <h1 className="font-display font-black text-2xl md:text-3xl leading-none tracking-tight">
-              {renderTitle(brandText.title)}
+              {(() => {
+                const parts = brandText.title.split(" ");
+                if (parts.length < 2) return brandText.title;
+                const [first, ...rest] = parts;
+                return (
+                  <>
+                    {first} <span className="text-primary">{rest.join(" ")}</span>
+                  </>
+                );
+              })()}
             </h1>
             <p className="text-xs text-muted-foreground mt-1 uppercase tracking-[0.18em]">
               {brandText.subtitle} <span className="text-accent">·</span> {brandText.period}
