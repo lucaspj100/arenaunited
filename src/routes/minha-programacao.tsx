@@ -16,6 +16,18 @@ import {
   updateInterview,
 } from "@/lib/interviews";
 import { ArrowLeft, CalendarDays, CheckCircle2, Loader2, Pencil, Plus, Trophy } from "lucide-react";
+import {
+  addMonths,
+  endOfMonth,
+  endOfWeek,
+  format,
+  isSameMonth,
+  isToday,
+  startOfMonth,
+  startOfWeek,
+} from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export const Route = createFileRoute("/minha-programacao")({
   beforeLoad: async () => {
@@ -38,6 +50,8 @@ function MinhaProgramacao() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Interview | null>(null);
   const [creating, setCreating] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(() => startOfMonth(new Date()));
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const reload = async (sid: string) => {
     setLoading(true);
@@ -65,6 +79,21 @@ function MinhaProgramacao() {
   const tomorrows = useMemo(
     () => interviews.filter((i) => i.scheduledDate === tomorrow),
     [interviews, tomorrow],
+  );
+
+  const interviewsByDate = useMemo(() => {
+    const map = new Map<string, Interview[]>();
+    for (const i of interviews) {
+      const arr = map.get(i.scheduledDate) ?? [];
+      arr.push(i);
+      map.set(i.scheduledDate, arr);
+    }
+    return map;
+  }, [interviews]);
+
+  const selectedItems = useMemo(
+    () => (selectedDate ? (interviewsByDate.get(selectedDate) ?? []) : []),
+    [interviewsByDate, selectedDate],
   );
 
   const countByStatus = (list: Interview[], filter: (i: Interview) => boolean) =>
@@ -192,6 +221,46 @@ function MinhaProgramacao() {
         onDelete={canEditAll ? async (id) => { await deleteInterview(id); await reload(sellerId); } : undefined}
         emptyHint="Nenhuma entrevista para amanhã."
       />
+
+      <div className="h-8" />
+
+      <MonthCalendar
+        month={calendarMonth}
+        onPrev={() => setCalendarMonth((m) => addMonths(m, -1))}
+        onNext={() => setCalendarMonth((m) => addMonths(m, 1))}
+        onToday={() => {
+          setCalendarMonth(startOfMonth(new Date()));
+          setSelectedDate(todayISO());
+        }}
+        interviewsByDate={interviewsByDate}
+        selectedDate={selectedDate}
+        onSelectDate={setSelectedDate}
+      />
+
+      {selectedDate && (
+        <>
+          <div className="h-6" />
+          <AgendaTable
+            title={`Agenda de ${format(new Date(`${selectedDate}T00:00:00`), "dd 'de' MMMM", { locale: ptBR })}`}
+            items={selectedItems}
+            loading={loading}
+            canEditAll={canEditAll}
+            onEdit={(i) => {
+              setCreating(false);
+              setEditing(i);
+            }}
+            onDelete={
+              canEditAll
+                ? async (id) => {
+                    await deleteInterview(id);
+                    await reload(sellerId);
+                  }
+                : undefined
+            }
+            emptyHint="Nenhuma entrevista neste dia."
+          />
+        </>
+      )}
 
       <InterviewFormDialog
         open={creating || !!editing}
