@@ -37,8 +37,9 @@ function Index() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingMyId, setEditingMyId] = useState<string | null>(null);
   const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-  const { userId, email, role } = useCurrentUser();
+  const { userId, email, role, isStaff } = useCurrentUser();
   const isAdmin = role === "admin";
+  const [teamTab, setTeamTab] = useState<"all" | "mine">("all");
 
   useEffect(() => {
     saveLocalConfig(config);
@@ -76,6 +77,11 @@ function Index() {
   const ranked = useMemo(
     () => rankSellers(sellers, config.weights),
     [sellers, config.weights],
+  );
+
+  const visibleRanked = useMemo(
+    () => (isStaff && teamTab === "mine" ? ranked.filter((s) => s.inMyTeam) : ranked),
+    [ranked, teamTab, isStaff],
   );
 
   const totalMaterial = sellers.reduce((a, s) => a + s.material, 0);
@@ -164,7 +170,7 @@ function Index() {
               </Link>
             </>
           )}
-          {isAdmin && (
+          {isStaff && (
             <>
               <Link to="/acessos" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
                 Acessos
@@ -172,9 +178,11 @@ function Index() {
               <Link to="/agenda-equipe" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
                 Agenda da Equipe
               </Link>
-              <Link to="/comissoes-equipe" className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90">
-                Comissões da Equipe
-              </Link>
+              {isAdmin && (
+                <Link to="/comissoes-equipe" className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90">
+                  Comissões da Equipe
+                </Link>
+              )}
             </>
           )}
           <AuthBar role={role} email={email} userId={userId} />
@@ -231,8 +239,30 @@ function Index() {
 
       <section className="grid lg:grid-cols-[1fr_360px] gap-6">
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display font-bold text-xl">Ranking completo</h2>
+          <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+            <div className="flex items-center gap-3">
+              <h2 className="font-display font-bold text-xl">
+                {isStaff && teamTab === "mine" ? "Minha equipe" : "Ranking completo"}
+              </h2>
+              {isStaff && (
+                <div className="inline-flex rounded-lg bg-secondary p-0.5 text-xs font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => setTeamTab("all")}
+                    className={`px-3 py-1.5 rounded-md transition ${teamTab === "all" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    Completo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTeamTab("mine")}
+                    className={`px-3 py-1.5 rounded-md transition ${teamTab === "mine" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    Minha equipe
+                  </button>
+                </div>
+              )}
+            </div>
             {isAdmin && (
               <button
                 onClick={addSeller}
@@ -251,7 +281,7 @@ function Index() {
             <div></div>
           </div>
           <div className="space-y-2">
-            {ranked.map((s, i) => {
+            {visibleRanked.map((s, i) => {
               const isMine = role === "vendedor" && s.userId === userId;
               return (
                 <SellerRow
@@ -260,23 +290,25 @@ function Index() {
                   rank={i + 1}
                   onChange={(patch) => updateSeller(s.id, patch)}
                   onDelete={() => deleteSeller(s.id)}
-                  onEdit={() => (isAdmin ? setEditingId(s.id) : setEditingMyId(s.id))}
-                  readOnly={!isAdmin}
-                  showEditButton={isAdmin || isMine}
-                  editLabel={isMine && !isAdmin ? "Editar meus resultados" : undefined}
+                  onEdit={() => (isStaff ? setEditingId(s.id) : setEditingMyId(s.id))}
+                  readOnly={!isStaff}
+                  showEditButton={isStaff || isMine}
+                  editLabel={isMine && !isStaff ? "Editar meus resultados" : undefined}
                 />
               );
             })}
-            {!loading && ranked.length === 0 && (
+            {!loading && visibleRanked.length === 0 && (
               <div className="text-center py-12 text-muted-foreground border border-dashed border-border rounded-xl">
-                Nenhum vendedor cadastrado.
+                {isStaff && teamTab === "mine"
+                  ? "Nenhum vendedor na sua equipe ainda. Marque 'Está na minha equipe' ao editar um vendedor."
+                  : "Nenhum vendedor cadastrado."}
               </div>
             )}
           </div>
         </div>
 
         <aside className="space-y-4">
-          <WeightsPanel weights={config.weights} onWeights={setWeights} readOnly={!isAdmin} />
+          <WeightsPanel weights={config.weights} onWeights={setWeights} readOnly={!isStaff} />
           <div className="rounded-2xl bg-gradient-to-br from-card to-secondary border border-border p-5 text-sm">
             <div className="font-display font-bold mb-2">Como funciona</div>
             <p className="text-muted-foreground leading-relaxed">
