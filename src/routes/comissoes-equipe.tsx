@@ -389,7 +389,7 @@ function ComissoesEquipe() {
                 </tr>
               </thead>
               <tbody>
-                {enrollments.map((e) => {
+                {sortedEnrollments.map((e) => {
                   const s = sellers.find((x) => x.id === e.sellerId);
                   return (
                     <tr key={e.id} className="border-b border-border/50 last:border-0 hover:bg-secondary/30">
