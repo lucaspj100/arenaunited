@@ -9,6 +9,7 @@ export type CurrentUser = {
   email: string | null;
   role: Role;
   isStaff: boolean;
+  isDirectorLike: boolean;
   sellerId: string | null;
 };
 
@@ -19,6 +20,7 @@ export function useCurrentUser(): CurrentUser {
     email: null,
     role: null,
     isStaff: false,
+    isDirectorLike: false,
     sellerId: null,
   });
 
@@ -28,7 +30,15 @@ export function useCurrentUser(): CurrentUser {
     const load = async (uid: string | null, email: string | null) => {
       if (!uid) {
         if (mounted)
-          setState({ loading: false, userId: null, email: null, role: null, isStaff: false, sellerId: null });
+          setState({
+            loading: false,
+            userId: null,
+            email: null,
+            role: null,
+            isStaff: false,
+            isDirectorLike: false,
+            sellerId: null,
+          });
         return;
       }
       const [rolesRes, sellerRes] = await Promise.all([
@@ -59,6 +69,8 @@ export function useCurrentUser(): CurrentUser {
             role === "diretor" ||
             role === "ceo" ||
             role === "presidente",
+          isDirectorLike:
+            role === "diretor" || role === "ceo" || role === "presidente",
           sellerId: sellerRes.data?.id ?? null,
         });
     };
