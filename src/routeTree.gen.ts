@@ -13,6 +13,7 @@ import { Route as MinhasComissoesRouteImport } from './routes/minhas-comissoes'
 import { Route as MinhaProgramacaoRouteImport } from './routes/minha-programacao'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ComissoesEquipeRouteImport } from './routes/comissoes-equipe'
+import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AgendaEquipeRouteImport } from './routes/agenda-equipe'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -36,6 +37,11 @@ const ComissoesEquipeRoute = ComissoesEquipeRouteImport.update({
   path: '/comissoes-equipe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CadastroRoute = CadastroRouteImport.update({
+  id: '/cadastro',
+  path: '/cadastro',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AgendaEquipeRoute = AgendaEquipeRouteImport.update({
   id: '/agenda-equipe',
   path: '/agenda-equipe',
@@ -50,6 +56,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/agenda-equipe': typeof AgendaEquipeRoute
+  '/cadastro': typeof CadastroRoute
   '/comissoes-equipe': typeof ComissoesEquipeRoute
   '/login': typeof LoginRoute
   '/minha-programacao': typeof MinhaProgramacaoRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/agenda-equipe': typeof AgendaEquipeRoute
+  '/cadastro': typeof CadastroRoute
   '/comissoes-equipe': typeof ComissoesEquipeRoute
   '/login': typeof LoginRoute
   '/minha-programacao': typeof MinhaProgramacaoRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/agenda-equipe': typeof AgendaEquipeRoute
+  '/cadastro': typeof CadastroRoute
   '/comissoes-equipe': typeof ComissoesEquipeRoute
   '/login': typeof LoginRoute
   '/minha-programacao': typeof MinhaProgramacaoRoute
@@ -77,6 +86,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/agenda-equipe'
+    | '/cadastro'
     | '/comissoes-equipe'
     | '/login'
     | '/minha-programacao'
@@ -85,6 +95,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/agenda-equipe'
+    | '/cadastro'
     | '/comissoes-equipe'
     | '/login'
     | '/minha-programacao'
@@ -93,6 +104,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/agenda-equipe'
+    | '/cadastro'
     | '/comissoes-equipe'
     | '/login'
     | '/minha-programacao'
@@ -102,6 +114,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AgendaEquipeRoute: typeof AgendaEquipeRoute
+  CadastroRoute: typeof CadastroRoute
   ComissoesEquipeRoute: typeof ComissoesEquipeRoute
   LoginRoute: typeof LoginRoute
   MinhaProgramacaoRoute: typeof MinhaProgramacaoRoute
@@ -138,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ComissoesEquipeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cadastro': {
+      id: '/cadastro'
+      path: '/cadastro'
+      fullPath: '/cadastro'
+      preLoaderRoute: typeof CadastroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/agenda-equipe': {
       id: '/agenda-equipe'
       path: '/agenda-equipe'
@@ -158,6 +178,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AgendaEquipeRoute: AgendaEquipeRoute,
+  CadastroRoute: CadastroRoute,
   ComissoesEquipeRoute: ComissoesEquipeRoute,
   LoginRoute: LoginRoute,
   MinhaProgramacaoRoute: MinhaProgramacaoRoute,
@@ -166,3 +187,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
