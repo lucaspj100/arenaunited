@@ -179,6 +179,25 @@ function ComissoesEquipe() {
     await reload();
   };
 
+  const handleApprove = async (id: string) => {
+    try {
+      await setEnrollmentStatus(id, "approved");
+      await reload();
+    } catch (err) {
+      alert("Erro ao aprovar: " + ((err as Error)?.message ?? ""));
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    const reason = prompt("Motivo da recusa (opcional):") ?? "";
+    try {
+      await setEnrollmentStatus(id, "rejected", reason || null);
+      await reload();
+    } catch (err) {
+      alert("Erro ao recusar: " + ((err as Error)?.message ?? ""));
+    }
+  };
+
   const rankings: { title: string; key: keyof AggRow; format: (v: number) => string }[] = [
     { title: "Matrículas fechadas", key: "count", format: (v) => String(v) },
     { title: "Valor de matrículas", key: "enroll", format: formatBRL },
@@ -349,11 +368,12 @@ function ComissoesEquipe() {
                   <th className="text-left px-4 py-2">Data</th>
                   <th className="text-left px-4 py-2">Vendedor</th>
                   <th className="text-left px-4 py-2">Aluno</th>
+                  <th className="text-left px-4 py-2">Status</th>
                   <th className="text-right px-4 py-2">Matr.</th>
                   <th className="text-right px-4 py-2">Mensal.</th>
                   <th className="text-right px-4 py-2">Material</th>
                   <th className="text-right px-4 py-2">Comissão</th>
-                  <th className="px-4 py-2 w-20"></th>
+                  <th className="px-4 py-2 w-32"></th>
                 </tr>
               </thead>
               <tbody>
@@ -364,12 +384,19 @@ function ComissoesEquipe() {
                       <td className="px-4 py-2 font-mono">{e.enrollmentDate}</td>
                       <td className="px-4 py-2">{s?.name ?? "—"}</td>
                       <td className="px-4 py-2 font-medium">{e.studentName}</td>
+                      <td className="px-4 py-2"><StatusBadge status={e.status} reason={e.rejectionReason} /></td>
                       <td className="px-4 py-2 text-right font-mono">{formatBRL(e.enrollmentValue)}</td>
                       <td className="px-4 py-2 text-right font-mono text-muted-foreground">{formatBRL(e.monthlyFee)}</td>
                       <td className="px-4 py-2 text-right font-mono">{formatBRL(e.materialValue)}</td>
                       <td className="px-4 py-2 text-right font-mono text-primary font-bold">{formatBRL(e.commissionAmount)}</td>
                       <td className="px-4 py-2 text-right">
                         <div className="inline-flex gap-1">
+                          {e.status === "pending" && (
+                            <>
+                              <button onClick={() => handleApprove(e.id)} className="p-1.5 rounded-md bg-primary/15 text-primary hover:bg-primary/25" title="Aprovar"><Check className="size-3.5" /></button>
+                              <button onClick={() => handleReject(e.id)} className="p-1.5 rounded-md bg-destructive/15 text-destructive hover:bg-destructive/25" title="Recusar"><X className="size-3.5" /></button>
+                            </>
+                          )}
                           <button onClick={() => { setCreating(false); setEditing(e); }} className="p-1.5 rounded-md bg-secondary hover:bg-secondary/70"><Pencil className="size-3.5" /></button>
                           <button onClick={() => handleDelete(e.id)} className="p-1.5 rounded-md bg-destructive/15 text-destructive hover:bg-destructive/25"><Trash2 className="size-3.5" /></button>
                         </div>
