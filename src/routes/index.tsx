@@ -47,6 +47,7 @@ function Index() {
   const isAdmin = role === "admin";
   const [teamTab, setTeamTab] = useState<"all" | "mine">("all");
   const [enrollAgg, setEnrollAgg] = useState<Record<string, { monthly: number; commission: number }>>({});
+  const [claiming, setClaiming] = useState(false);
   const { text: brandText, refresh: refreshBrandText } = useBrandText();
   const [editingBrand, setEditingBrand] = useState(false);
   const [brandDraft, setBrandDraft] = useState<BrandText>(brandText);
@@ -197,6 +198,20 @@ function Index() {
     }
   };
 
+  const claimMySeller = async () => {
+    setClaiming(true);
+    try {
+      const { error } = await supabase.rpc("claim_seller_profile");
+      if (error) throw error;
+      const data = await fetchSellers();
+      setSellers(data);
+    } catch (e) {
+      alert("Não foi possível entrar no ranking: " + ((e as Error)?.message ?? "erro"));
+    } finally {
+      setClaiming(false);
+    }
+  };
+
   return (
     <main className="min-h-screen px-4 md:px-8 py-8 max-w-7xl mx-auto">
       <header className="flex flex-wrap items-center justify-between gap-4 mb-10">
@@ -332,7 +347,22 @@ function Index() {
 
       {role === "vendedor" && !mySellerId && (
         <div className="mb-6 rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
-          Seu usuário ainda não está vinculado a um vendedor. Peça ao administrador para vincular.
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="font-display font-bold text-foreground">Entre no ranking</div>
+              <div className="text-xs mt-1">
+                Seu usuário ainda não está vinculado. Use o e-mail liberado em Acessos para se adicionar agora.
+              </div>
+            </div>
+            <button
+              onClick={claimMySeller}
+              disabled={claiming}
+              className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-60 inline-flex items-center gap-2"
+            >
+              {claiming && <Loader2 className="size-4 animate-spin" />}
+              Entrar no ranking
+            </button>
+          </div>
         </div>
       )}
 
