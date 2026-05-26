@@ -296,7 +296,7 @@ function Index() {
                 </Link>
               )}
               <Link to="/comissoes-equipe" className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90">
-                {role === "diretor" ? "Comissões da Minha Equipe" : "Comissões da Equipe"}
+                {role === "admin" ? "Comissões da Equipe" : "Comissões da Minha Equipe"}
               </Link>
             </>
           )}
