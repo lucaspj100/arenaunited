@@ -467,6 +467,7 @@ function Fanaticos() {
             open={!!editingId}
             onOpenChange={(o) => !o && setEditingId(null)}
             canAssignDirector
+            canManageFanaticos
             onSave={(patch) => {
               if (!editingId) return;
               patchSeller(editingId, patch);
