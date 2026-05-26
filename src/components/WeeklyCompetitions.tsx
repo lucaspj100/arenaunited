@@ -27,7 +27,7 @@ export function WeeklyCompetitions({ sellers }: { sellers: Seller[] }) {
   const cards: CardSpec[] = [
     {
       title: "Agenda Cheia da Semana",
-      subtitle: "Quem mais agendou entrevistas",
+      subtitle: "Quem mais marcou entrevistas",
       icon: CalendarCheck,
       accent: "from-primary/30 to-transparent border-primary/40",
       format: (v) => `${v}`,
@@ -38,16 +38,16 @@ export function WeeklyCompetitions({ sellers }: { sellers: Seller[] }) {
       title: "Presença Confirmada",
       subtitle: "Quem mais realizou entrevistas",
       icon: UserCheck,
-      accent: "from-accent/30 to-transparent border-accent/40",
+      accent: "from-accent/25 to-transparent border-accent/40",
       format: (v) => `${v}`,
       items: completed,
       emptyHint: "Nenhuma entrevista realizada esta semana.",
     },
     {
       title: "Conversão de Elite",
-      subtitle: `Melhor taxa entrevista → matrícula · mín. ${MIN_WEEK_INTERVIEWS_FOR_CONVERSION} entrevistas`,
+      subtitle: `Melhor taxa entrevista → matrícula · mín. ${MIN_WEEK_INTERVIEWS_FOR_CONVERSION} realizadas`,
       icon: Target,
-      accent: "from-gold/30 to-transparent border-gold/40",
+      accent: "from-gold/25 to-transparent border-gold/40",
       format: (v) => `${v.toFixed(1).replace(".", ",")}%`,
       items: conversion,
       emptyHint: `Ninguém atingiu ${MIN_WEEK_INTERVIEWS_FOR_CONVERSION} entrevistas ainda.`,
@@ -56,8 +56,8 @@ export function WeeklyCompetitions({ sellers }: { sellers: Seller[] }) {
 
   return (
     <section className="mb-12">
-      <h2 className="font-display font-bold text-xl mb-6 flex items-center gap-2">
-        <span className="text-primary">⚡</span> Competições da Semana
+      <h2 className="font-display font-black text-xl mb-6 flex items-center gap-2 uppercase tracking-wide">
+        <span className="text-accent">⚡</span> Competições da Semana
       </h2>
       <div className="grid md:grid-cols-3 gap-4">
         {cards.map((c) => (
