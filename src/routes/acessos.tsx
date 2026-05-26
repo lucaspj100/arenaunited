@@ -21,7 +21,8 @@ type Invite = {
 };
 
 function AccessesPage() {
-  const { loading: ul, isStaff } = useCurrentUser();
+  const { loading: ul, isStaff, role } = useCurrentUser();
+  const isAdmin = role === "admin";
   const navigate = useNavigate();
   const [items, setItems] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(true);
