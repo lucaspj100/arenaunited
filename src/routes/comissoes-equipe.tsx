@@ -68,6 +68,9 @@ function ComissoesEquipe() {
 
   const range = useMemo(() => getPeriodRange(period), [period]);
 
+  const isAdmin = role === "admin";
+  const isDirector = role === "diretor";
+
   const reload = async () => {
     setLoading(true);
     try {
@@ -79,7 +82,9 @@ function ComissoesEquipe() {
           to: range.to,
         }),
       ]);
-      setSellers(s);
+      // Diretor só vê seus próprios vendedores
+      const scoped = isDirector ? s.filter((x) => x.directorId === userId) : s;
+      setSellers(scoped);
       setEnrollments(e);
     } catch (err) {
       console.error(err);
@@ -89,9 +94,9 @@ function ComissoesEquipe() {
   };
 
   useEffect(() => {
-    reload();
+    if (isAdmin || isDirector) reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [range.from, range.to, sellerFilter]);
+  }, [range.from, range.to, sellerFilter, isAdmin, isDirector, userId]);
 
   const filteredSellers = useMemo(
     () => sellers.filter((s) => (roleFilter ? s.role === roleFilter : true)),
@@ -149,12 +154,12 @@ function ComissoesEquipe() {
     );
   }
 
-  if (role !== "admin") {
+  if (!isAdmin && !isDirector) {
     return (
       <main className="min-h-screen max-w-3xl mx-auto px-4 py-10">
         <Header role={role} email={email} userId={userId} />
         <div className="mt-10 rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">
-          Acesso restrito ao administrador.
+          Acesso restrito a administrador ou diretor.
         </div>
       </main>
     );
@@ -190,8 +195,12 @@ function ComissoesEquipe() {
 
       <section className="mt-8 mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display font-black text-2xl md:text-3xl">Comissões da Equipe</h1>
-          <p className="text-sm text-muted-foreground">Visão consolidada · {range.label}</p>
+          <h1 className="font-display font-black text-2xl md:text-3xl">
+            {isDirector ? "Comissões da Minha Equipe" : "Comissões da Equipe"}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {isDirector ? "Apenas vendedores sob sua direção" : "Visão consolidada"} · {range.label}
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <PeriodSelector value={period} onChange={setPeriod} />
