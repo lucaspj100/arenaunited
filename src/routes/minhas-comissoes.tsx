@@ -86,18 +86,21 @@ function MinhasComissoes() {
   }, [sellerId, range.from, range.to]);
 
   const totals = useMemo(() => {
-    const totalEnroll = enrollments.reduce((a, e) => a + e.enrollmentValue, 0);
-    const totalMonthly = enrollments.reduce((a, e) => a + e.monthlyFee, 0);
-    const totalMaterial = enrollments.reduce((a, e) => a + e.materialValue, 0);
-    const totalCommission = enrollments.reduce((a, e) => a + e.commissionAmount, 0);
+    const approved = enrollments.filter((e) => e.status === "approved");
+    const pending = enrollments.filter((e) => e.status === "pending");
+    const totalEnroll = approved.reduce((a, e) => a + e.enrollmentValue, 0);
+    const totalMonthly = approved.reduce((a, e) => a + e.monthlyFee, 0);
+    const totalMaterial = approved.reduce((a, e) => a + e.materialValue, 0);
+    const totalCommission = approved.reduce((a, e) => a + e.commissionAmount, 0);
     return {
-      count: enrollments.length,
+      count: approved.length,
+      pendingCount: pending.length,
       totalEnroll,
       totalMonthly,
       totalMaterial,
       totalCommission,
-      avgEnroll: enrollments.length ? totalEnroll / enrollments.length : 0,
-      avgMonthly: enrollments.length ? totalMonthly / enrollments.length : 0,
+      avgEnroll: approved.length ? totalEnroll / approved.length : 0,
+      avgMonthly: approved.length ? totalMonthly / approved.length : 0,
     };
   }, [enrollments]);
 
