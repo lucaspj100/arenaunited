@@ -38,10 +38,11 @@ type Row = {
   week_enrollments: number | null;
   user_id: string | null;
   role: "consultor" | "gerente" | null;
+  in_my_team: boolean | null;
 };
 
 const COLS =
-  "id,name,avatar,deals,material,goal_deals,goal_material,sort_index,week_scheduled,week_completed,week_enrollments,user_id,role";
+  "id,name,avatar,deals,material,goal_deals,goal_material,sort_index,week_scheduled,week_completed,week_enrollments,user_id,role,in_my_team";
 
 const toSeller = (r: Row): Seller => ({
   id: r.id,
@@ -57,6 +58,7 @@ const toSeller = (r: Row): Seller => ({
   weekEnrollments: r.week_enrollments ?? 0,
   userId: r.user_id,
   role: (r.role ?? "consultor") as Seller["role"],
+  inMyTeam: r.in_my_team ?? false,
 });
 
 export async function fetchSellers(): Promise<Seller[]> {
@@ -130,6 +132,7 @@ export async function updateSeller(id: string, patch: Partial<Seller>): Promise<
     week_enrollments?: number;
     user_id?: string | null;
     role?: "consultor" | "gerente";
+    in_my_team?: boolean;
   } = {};
   if (patch.name !== undefined) row.name = patch.name;
   if (patch.avatar !== undefined) row.avatar = patch.avatar ?? null;
@@ -143,6 +146,7 @@ export async function updateSeller(id: string, patch: Partial<Seller>): Promise<
   if (patch.weekEnrollments !== undefined) row.week_enrollments = patch.weekEnrollments;
   if (patch.userId !== undefined) row.user_id = patch.userId ?? null;
   if (patch.role !== undefined) row.role = patch.role;
+  if (patch.inMyTeam !== undefined) row.in_my_team = patch.inMyTeam;
   const { error } = await supabase.from("sellers").update(row).eq("id", id);
   if (error) throw error;
 }

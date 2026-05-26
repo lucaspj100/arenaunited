@@ -212,6 +212,23 @@ export function EditSellerDialog({
           </div>
 
           <div className="pt-2 border-t border-border">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={!!form.inMyTeam}
+                onChange={(e) => set("inMyTeam", e.target.checked)}
+                className="size-4 accent-primary"
+              />
+              <div>
+                <div className="text-sm font-semibold">Está na minha equipe</div>
+                <div className="text-[11px] text-muted-foreground">
+                  Marque para aparecer na aba "Minha equipe" do ranking.
+                </div>
+              </div>
+            </label>
+          </div>
+
+          <div className="pt-2 border-t border-border">
             <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
               Vincular a usuário
             </div>

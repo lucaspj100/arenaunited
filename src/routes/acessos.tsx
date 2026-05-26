@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { ArrowLeft, Loader2, Mail, Plus, Trash2, CheckCircle2, Clock } from "lucide-react";
+import { ArrowLeft, Loader2, Mail, Plus, Trash2, CheckCircle2, Clock, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/acessos")({
   component: AccessesPage,
@@ -14,35 +14,37 @@ type Invite = {
   email: string;
   name: string;
   role: "consultor" | "gerente";
+  app_role: "vendedor" | "diretor" | "admin";
   used_at: string | null;
   created_at: string;
 };
 
 function AccessesPage() {
-  const { loading: ul, role } = useCurrentUser();
+  const { loading: ul, isStaff } = useCurrentUser();
   const navigate = useNavigate();
   const [items, setItems] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [r, setR] = useState<"consultor" | "gerente">("consultor");
+  const [appRole, setAppRole] = useState<"vendedor" | "diretor">("vendedor");
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
     if (ul) return;
-    if (role !== "admin") {
+    if (!isStaff) {
       navigate({ to: "/" });
       return;
     }
     load();
-  }, [ul, role, navigate]);
+  }, [ul, isStaff, navigate]);
 
   const load = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("allowed_emails")
-      .select("id,email,name,role,used_at,created_at")
+      .select("id,email,name,role,app_role,used_at,created_at")
       .order("created_at", { ascending: false });
     if (error) setErr(error.message);
     else setItems((data ?? []) as Invite[]);
@@ -58,6 +60,7 @@ function AccessesPage() {
       email: email.trim().toLowerCase(),
       name: name.trim(),
       role: r,
+      app_role: appRole,
     });
     setSaving(false);
     if (error) {
@@ -67,6 +70,7 @@ function AccessesPage() {
     setEmail("");
     setName("");
     setR("consultor");
+    setAppRole("vendedor");
     load();
   };
 
@@ -91,7 +95,7 @@ function AccessesPage() {
 
       <form onSubmit={add} className="rounded-2xl bg-card border border-border p-5 mb-6 space-y-3">
         <h2 className="font-display font-bold text-sm">Liberar novo e-mail</h2>
-        <div className="grid sm:grid-cols-[1fr_1fr_140px_auto] gap-2">
+        <div className="grid sm:grid-cols-[1fr_1fr_130px_140px_auto] gap-2">
           <input
             type="email"
             placeholder="email@exemplo.com"
@@ -108,9 +112,18 @@ function AccessesPage() {
             className="rounded-lg bg-input border border-border px-3 py-2 text-sm outline-none focus:border-primary"
           />
           <select
+            value={appRole}
+            onChange={(e) => setAppRole(e.target.value as "vendedor" | "diretor")}
+            className="rounded-lg bg-input border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+          >
+            <option value="vendedor">Vendedor</option>
+            <option value="diretor">Diretor</option>
+          </select>
+          <select
             value={r}
             onChange={(e) => setR(e.target.value as "consultor" | "gerente")}
-            className="rounded-lg bg-input border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+            disabled={appRole === "diretor"}
+            className="rounded-lg bg-input border border-border px-3 py-2 text-sm outline-none focus:border-primary disabled:opacity-50"
           >
             <option value="consultor">Consultor</option>
             <option value="gerente">Gerente</option>
@@ -126,7 +139,7 @@ function AccessesPage() {
         </div>
         {err && <p className="text-xs text-destructive">{err}</p>}
         <p className="text-[11px] text-muted-foreground">
-          A pessoa criará a senha sozinha em <span className="font-mono">/cadastro</span>. Ao se cadastrar, vira vendedor automaticamente.
+          A pessoa criará a senha sozinha em <span className="font-mono">/cadastro</span>. Diretores entram com acesso administrativo (exceto comissões da equipe).
         </p>
       </form>
 
@@ -150,9 +163,15 @@ function AccessesPage() {
                 <div className="text-xs text-muted-foreground font-mono truncate">{i.email}</div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded bg-secondary font-mono">
-                  {i.role}
-                </span>
+                {i.app_role === "diretor" ? (
+                  <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-1 rounded bg-primary/15 text-primary font-mono">
+                    <ShieldCheck className="size-3" /> Diretor
+                  </span>
+                ) : (
+                  <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded bg-secondary font-mono">
+                    {i.role}
+                  </span>
+                )}
                 {i.used_at ? (
                   <span className="flex items-center gap-1 text-[10px] text-primary font-mono">
                     <CheckCircle2 className="size-3" /> Usado

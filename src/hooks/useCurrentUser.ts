@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type Role = "admin" | "vendedor" | null;
+export type Role = "admin" | "diretor" | "vendedor" | null;
 
 export type CurrentUser = {
   loading: boolean;
   userId: string | null;
   email: string | null;
   role: Role;
+  isStaff: boolean;
   sellerId: string | null;
 };
 
@@ -17,6 +18,7 @@ export function useCurrentUser(): CurrentUser {
     userId: null,
     email: null,
     role: null,
+    isStaff: false,
     sellerId: null,
   });
 
@@ -26,7 +28,7 @@ export function useCurrentUser(): CurrentUser {
     const load = async (uid: string | null, email: string | null) => {
       if (!uid) {
         if (mounted)
-          setState({ loading: false, userId: null, email: null, role: null, sellerId: null });
+          setState({ loading: false, userId: null, email: null, role: null, isStaff: false, sellerId: null });
         return;
       }
       const [rolesRes, sellerRes] = await Promise.all([
@@ -37,15 +39,18 @@ export function useCurrentUser(): CurrentUser {
       const roles = (rolesRes.data ?? []).map((r) => r.role);
       const role: Role = roles.includes("admin")
         ? "admin"
-        : roles.includes("vendedor")
-          ? "vendedor"
-          : null;
+        : roles.includes("diretor")
+          ? "diretor"
+          : roles.includes("vendedor")
+            ? "vendedor"
+            : null;
       if (mounted)
         setState({
           loading: false,
           userId: uid,
           email,
           role,
+          isStaff: role === "admin" || role === "diretor",
           sellerId: sellerRes.data?.id ?? null,
         });
     };

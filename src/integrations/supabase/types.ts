@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       allowed_emails: {
         Row: {
+          app_role: Database["public"]["Enums"]["app_role"]
           created_at: string
           email: string
           id: string
@@ -25,6 +26,7 @@ export type Database = {
           used_by: string | null
         }
         Insert: {
+          app_role?: Database["public"]["Enums"]["app_role"]
           created_at?: string
           email: string
           id?: string
@@ -34,6 +36,7 @@ export type Database = {
           used_by?: string | null
         }
         Update: {
+          app_role?: Database["public"]["Enums"]["app_role"]
           created_at?: string
           email?: string
           id?: string
@@ -169,6 +172,7 @@ export type Database = {
           goal_deals: number
           goal_material: number
           id: string
+          in_my_team: boolean
           material: number
           name: string
           position: number
@@ -188,6 +192,7 @@ export type Database = {
           goal_deals?: number
           goal_material?: number
           id?: string
+          in_my_team?: boolean
           material?: number
           name: string
           position?: number
@@ -207,6 +212,7 @@ export type Database = {
           goal_deals?: number
           goal_material?: number
           id?: string
+          in_my_team?: boolean
           material?: number
           name?: string
           position?: number
@@ -263,9 +269,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "vendedor"
+      app_role: "admin" | "vendedor" | "diretor"
       interview_status:
         | "marcada"
         | "realizada"
@@ -401,7 +408,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "vendedor"],
+      app_role: ["admin", "vendedor", "diretor"],
       interview_status: [
         "marcada",
         "realizada",

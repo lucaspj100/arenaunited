@@ -14,6 +14,7 @@ export type Seller = {
   weekEnrollments: number;
   userId?: string | null;
   role: SellerRole;
+  inMyTeam?: boolean;
 };
 
 export const MIN_WEEK_INTERVIEWS_FOR_CONVERSION = 3;
