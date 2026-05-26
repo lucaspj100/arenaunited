@@ -9,12 +9,14 @@ export const Route = createFileRoute("/acessos")({
   head: () => ({ meta: [{ title: "Acessos da equipe — Arena United" }] }),
 });
 
+type AppRoleValue = "vendedor" | "diretor" | "ceo" | "presidente" | "admin";
+
 type Invite = {
   id: string;
   email: string;
   name: string;
   role: "consultor" | "gerente";
-  app_role: "vendedor" | "diretor" | "admin";
+  app_role: AppRoleValue;
   used_at: string | null;
   created_at: string;
   used_by: string | null;
@@ -29,7 +31,7 @@ function AccessesPage() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [r, setR] = useState<"consultor" | "gerente">("consultor");
-  const [appRole, setAppRole] = useState<"vendedor" | "diretor">("vendedor");
+  const [appRole, setAppRole] = useState<"vendedor" | "diretor" | "ceo" | "presidente">("vendedor");
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -85,7 +87,7 @@ function AccessesPage() {
 
   const saveRoles = async (
     inv: Invite,
-    nextAppRole: "vendedor" | "diretor" | "admin",
+    nextAppRole: AppRoleValue,
     nextSellerRole: "consultor" | "gerente",
   ) => {
     const { error } = await supabase
@@ -146,16 +148,18 @@ function AccessesPage() {
           />
           <select
             value={appRole}
-            onChange={(e) => setAppRole(e.target.value as "vendedor" | "diretor")}
+            onChange={(e) => setAppRole(e.target.value as typeof appRole)}
             className="rounded-lg bg-input border border-border px-3 py-2 text-sm outline-none focus:border-primary"
           >
             <option value="vendedor">Vendedor</option>
             <option value="diretor">Diretor</option>
+            <option value="ceo">CEO</option>
+            <option value="presidente">Presidente</option>
           </select>
           <select
             value={r}
             onChange={(e) => setR(e.target.value as "consultor" | "gerente")}
-            disabled={appRole === "diretor"}
+            disabled={appRole !== "vendedor"}
             className="rounded-lg bg-input border border-border px-3 py-2 text-sm outline-none focus:border-primary disabled:opacity-50"
           >
             <option value="consultor">Consultor</option>
@@ -172,7 +176,7 @@ function AccessesPage() {
         </div>
         {err && <p className="text-xs text-destructive">{err}</p>}
         <p className="text-[11px] text-muted-foreground">
-          A pessoa criará a senha sozinha em <span className="font-mono">/cadastro</span>. Diretores entram com acesso administrativo (exceto comissões da equipe).
+          A pessoa criará a senha sozinha em <span className="font-mono">/cadastro</span>. Diretores, CEO e Presidente entram com acesso administrativo da equipe.
         </p>
       </form>
 
@@ -230,12 +234,12 @@ function RoleEditor({
   invite: Invite;
   onSave: (
     inv: Invite,
-    appRole: "vendedor" | "diretor" | "admin",
+    appRole: AppRoleValue,
     sellerRole: "consultor" | "gerente",
   ) => Promise<void>;
   isAdmin: boolean;
 }) {
-  const [appRole, setAppRole] = useState<"vendedor" | "diretor" | "admin">(invite.app_role);
+  const [appRole, setAppRole] = useState<AppRoleValue>(invite.app_role);
   const [sellerRole, setSellerRole] = useState<"consultor" | "gerente">(invite.role);
   const [saving, setSaving] = useState(false);
   const dirty = appRole !== invite.app_role || sellerRole !== invite.role;
@@ -249,6 +253,8 @@ function RoleEditor({
       >
         <option value="vendedor">Vendedor</option>
         <option value="diretor">Diretor</option>
+        <option value="ceo">CEO</option>
+        <option value="presidente">Presidente</option>
         {(isAdmin || invite.app_role === "admin") && (
           <option value="admin" disabled={!isAdmin}>Admin</option>
         )}
@@ -277,7 +283,7 @@ function RoleEditor({
           {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
         </button>
       )}
-      {!dirty && invite.app_role === "diretor" && (
+      {!dirty && (invite.app_role === "diretor" || invite.app_role === "ceo" || invite.app_role === "presidente") && (
         <ShieldCheck className="size-3.5 text-primary" />
       )}
     </div>

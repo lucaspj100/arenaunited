@@ -43,7 +43,7 @@ export function EditSellerDialog({
     supabase
       .from("allowed_emails")
       .select("name,email,used_by,app_role")
-      .eq("app_role", "diretor")
+      .in("app_role", ["diretor", "ceo", "presidente"])
       .not("used_by", "is", null)
       .then(({ data, error }) => {
         if (error) {

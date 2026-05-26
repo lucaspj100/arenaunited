@@ -126,7 +126,8 @@ function MinhaProgramacao() {
     await reload(sellerId);
   };
 
-  const canEditAll = role === "admin" || role === "diretor";
+  const canEditAll =
+    role === "admin" || role === "diretor" || role === "ceo" || role === "presidente";
 
   return (
     <main className="min-h-screen max-w-6xl mx-auto px-4 md:px-8 py-8">
@@ -224,7 +225,7 @@ function PageHeader({
         <ArrowLeft className="size-4" /> Ranking
       </Link>
       <div className="flex items-center gap-2">
-        {(role === "admin" || role === "diretor") && (
+        {(role === "admin" || role === "diretor" || role === "ceo" || role === "presidente") && (
           <Link
             to="/agenda-equipe"
             className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70"

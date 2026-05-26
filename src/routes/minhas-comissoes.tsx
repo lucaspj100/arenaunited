@@ -292,9 +292,9 @@ function Header({
       </Link>
       <div className="flex items-center gap-2">
         <Link to="/minha-programacao" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">Minha Programação</Link>
-        {(role === "admin" || role === "diretor") && (
+        {(role === "admin" || role === "diretor" || role === "ceo" || role === "presidente") && (
           <Link to="/comissoes-equipe" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
-            {role === "diretor" ? "Comissões da Minha Equipe" : "Comissões da Equipe"}
+            {role === "admin" ? "Comissões da Equipe" : "Comissões da Minha Equipe"}
           </Link>
         )}
         <AuthBar role={role} email={email} userId={userId} />
