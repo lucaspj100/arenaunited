@@ -70,7 +70,18 @@ export function scoreSeller(s: Seller, w: Weights) {
 export function rankSellers(sellers: Seller[], w: Weights) {
   return [...sellers]
     .map((s) => ({ ...s, score: scoreSeller(s, w) }))
-    .sort((a, b) => b.score - a.score);
+    .sort((a, b) => {
+      // Critério principal: matrículas (vendas realizadas)
+      if (b.deals !== a.deals) return b.deals - a.deals;
+      // 1º desempate: material vendido
+      if (b.material !== a.material) return b.material - a.material;
+      // 2º desempate: valor total (matrícula + material) — aproximado pelas metas
+      const totalA = a.material + a.deals * (a.goalMaterial / Math.max(a.goalDeals, 1));
+      const totalB = b.material + b.deals * (b.goalMaterial / Math.max(b.goalDeals, 1));
+      if (totalB !== totalA) return totalB - totalA;
+      // Último desempate: score de meta
+      return b.score - a.score;
+    });
 }
 
 export const formatBRL = (v: number) =>
