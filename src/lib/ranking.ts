@@ -15,6 +15,8 @@ export type Seller = {
   userId?: string | null;
   role: SellerRole;
   inMyTeam?: boolean;
+  commissionRate?: number | null;
+  directorId?: string | null;
 };
 
 export const MIN_WEEK_INTERVIEWS_FOR_CONVERSION = 3;

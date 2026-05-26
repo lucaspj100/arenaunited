@@ -295,11 +295,9 @@ function Index() {
               <Link to="/agenda-equipe" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
                 Agenda da Equipe
               </Link>
-              {isAdmin && (
-                <Link to="/comissoes-equipe" className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90">
-                  Comissões da Equipe
-                </Link>
-              )}
+              <Link to="/comissoes-equipe" className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90">
+                {role === "diretor" ? "Comissões da Minha Equipe" : "Comissões da Equipe"}
+              </Link>
             </>
           )}
           <AuthBar role={role} email={email} userId={userId} />
@@ -439,6 +437,7 @@ function Index() {
         seller={sellers.find((s) => s.id === editingId) ?? null}
         open={!!editingId}
         onOpenChange={(o) => !o && setEditingId(null)}
+        canAssignDirector={isAdmin}
         onSave={(patch) => {
           if (!editingId) return;
           updateSeller(editingId, patch);

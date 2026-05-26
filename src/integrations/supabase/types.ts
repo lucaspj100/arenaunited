@@ -188,8 +188,10 @@ export type Database = {
       sellers: {
         Row: {
           avatar: string | null
+          commission_rate: number | null
           created_at: string
           deals: number
+          director_id: string | null
           goal_deals: number
           goal_material: number
           id: string
@@ -208,8 +210,10 @@ export type Database = {
         }
         Insert: {
           avatar?: string | null
+          commission_rate?: number | null
           created_at?: string
           deals?: number
+          director_id?: string | null
           goal_deals?: number
           goal_material?: number
           id?: string
@@ -228,8 +232,10 @@ export type Database = {
         }
         Update: {
           avatar?: string | null
+          commission_rate?: number | null
           created_at?: string
           deals?: number
+          director_id?: string | null
           goal_deals?: number
           goal_material?: number
           id?: string
@@ -290,6 +296,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_director_of: { Args: { _seller_id: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {

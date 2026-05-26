@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Seller, formatBRL } from "@/lib/ranking";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -19,18 +20,43 @@ export function EditSellerDialog({
   open,
   onOpenChange,
   onSave,
+  canAssignDirector = false,
 }: {
   seller: Seller | null;
   open: boolean;
   onOpenChange: (o: boolean) => void;
   onSave: (patch: Partial<Seller>) => void;
+  canAssignDirector?: boolean;
 }) {
   const [form, setForm] = useState<Seller | null>(seller);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [directors, setDirectors] = useState<{ id: string; name: string; email: string }[]>([]);
 
   useEffect(() => {
     setForm(seller);
   }, [seller, open]);
+
+  useEffect(() => {
+    if (!open || !canAssignDirector) return;
+    supabase
+      .from("allowed_emails")
+      .select("name,email,used_by,app_role")
+      .eq("app_role", "diretor")
+      .not("used_by", "is", null)
+      .then(({ data, error }) => {
+        if (error) {
+          console.warn("directors load", error);
+          return;
+        }
+        setDirectors(
+          (data ?? []).map((r) => ({
+            id: r.used_by as string,
+            name: r.name as string,
+            email: r.email as string,
+          })),
+        );
+      });
+  }, [open, canAssignDirector]);
 
   if (!form) return null;
 
@@ -197,19 +223,73 @@ export function EditSellerDialog({
 
           <div className="pt-2 border-t border-border">
             <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
-              Cargo (define comissão e premiação)
+              Comissão e cargo
             </div>
-            <Field label="Cargo do vendedor">
-              <select
-                value={form.role}
-                onChange={(e) => set("role", e.target.value as Seller["role"])}
-                className="input"
-              >
-                <option value="consultor">Consultor (30% comissão)</option>
-                <option value="gerente">Gerente (53% comissão)</option>
-              </select>
-            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Cargo do vendedor">
+                <select
+                  value={form.role}
+                  onChange={(e) => set("role", e.target.value as Seller["role"])}
+                  className="input"
+                >
+                  <option value="consultor">Consultor (padrão 30%)</option>
+                  <option value="gerente">Gerente (padrão 53%)</option>
+                </select>
+              </Field>
+              <Field label="Comissão personalizada (%)">
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={0.5}
+                  value={
+                    form.commissionRate == null
+                      ? ""
+                      : Math.round(form.commissionRate * 10000) / 100
+                  }
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    if (raw === "") {
+                      set("commissionRate", null);
+                    } else {
+                      const pct = Math.max(0, Math.min(100, Number(raw)));
+                      set("commissionRate", pct / 100);
+                    }
+                  }}
+                  placeholder="Padrão do cargo"
+                  className="input"
+                />
+              </Field>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Deixe a comissão personalizada vazia para usar o padrão do cargo.
+            </p>
           </div>
+
+          {canAssignDirector && (
+            <div className="pt-2 border-t border-border">
+              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
+                Diretor responsável
+              </div>
+              <Field label="Diretor que acompanha este vendedor">
+                <select
+                  value={form.directorId ?? ""}
+                  onChange={(e) => set("directorId", (e.target.value || null) as Seller["directorId"])}
+                  className="input"
+                >
+                  <option value="">— Sem diretor —</option>
+                  {directors.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name} ({d.email})
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                O diretor selecionado verá e editará as comissões deste vendedor.
+              </p>
+            </div>
+          )}
 
           <div className="pt-2 border-t border-border">
             <label className="flex items-center gap-3 cursor-pointer">

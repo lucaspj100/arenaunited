@@ -39,10 +39,12 @@ type Row = {
   user_id: string | null;
   role: "consultor" | "gerente" | null;
   in_my_team: boolean | null;
+  commission_rate: number | string | null;
+  director_id: string | null;
 };
 
 const COLS =
-  "id,name,avatar,deals,material,goal_deals,goal_material,sort_index,week_scheduled,week_completed,week_enrollments,user_id,role,in_my_team";
+  "id,name,avatar,deals,material,goal_deals,goal_material,sort_index,week_scheduled,week_completed,week_enrollments,user_id,role,in_my_team,commission_rate,director_id";
 
 const toSeller = (r: Row): Seller => ({
   id: r.id,
@@ -59,6 +61,8 @@ const toSeller = (r: Row): Seller => ({
   userId: r.user_id,
   role: (r.role ?? "consultor") as Seller["role"],
   inMyTeam: r.in_my_team ?? false,
+  commissionRate: r.commission_rate == null ? null : Number(r.commission_rate),
+  directorId: r.director_id,
 });
 
 export async function fetchSellers(): Promise<Seller[]> {
@@ -133,6 +137,8 @@ export async function updateSeller(id: string, patch: Partial<Seller>): Promise<
     user_id?: string | null;
     role?: "consultor" | "gerente";
     in_my_team?: boolean;
+    commission_rate?: number | null;
+    director_id?: string | null;
   } = {};
   if (patch.name !== undefined) row.name = patch.name;
   if (patch.avatar !== undefined) row.avatar = patch.avatar ?? null;
@@ -147,6 +153,8 @@ export async function updateSeller(id: string, patch: Partial<Seller>): Promise<
   if (patch.userId !== undefined) row.user_id = patch.userId ?? null;
   if (patch.role !== undefined) row.role = patch.role;
   if (patch.inMyTeam !== undefined) row.in_my_team = patch.inMyTeam;
+  if (patch.commissionRate !== undefined) row.commission_rate = patch.commissionRate ?? null;
+  if (patch.directorId !== undefined) row.director_id = patch.directorId ?? null;
   const { error } = await supabase.from("sellers").update(row).eq("id", id);
   if (error) throw error;
 }
