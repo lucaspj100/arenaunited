@@ -36,7 +36,7 @@ export function SellerRow({
 
   return (
     <div
-      className={`group relative flex items-center gap-3 px-3 py-3 rounded-xl bg-card border transition-colors overflow-x-auto ${
+      className={`group relative flex items-center gap-3 px-3 py-3 rounded-xl bg-card border transition-colors overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
         isPodium ? "border-primary/30 hover:border-primary/60" : "border-border hover:border-primary/40"
       }`}
     >
