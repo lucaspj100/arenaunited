@@ -226,6 +226,7 @@ function MinhasComissoes() {
                 <tr className="border-b border-border">
                   <th className="text-left px-4 py-2">Data</th>
                   <th className="text-left px-4 py-2">Aluno</th>
+                  <th className="text-left px-4 py-2">Status</th>
                   <th className="text-right px-4 py-2">Matrícula</th>
                   <th className="text-right px-4 py-2">Mensalidade</th>
                   <th className="text-right px-4 py-2">Material</th>
@@ -239,6 +240,7 @@ function MinhasComissoes() {
                   <tr key={e.id} className="border-b border-border/50 last:border-0 hover:bg-secondary/30">
                     <td className="px-4 py-2 font-mono">{e.enrollmentDate}</td>
                     <td className="px-4 py-2 font-medium">{e.studentName}</td>
+                    <td className="px-4 py-2"><StatusBadge status={e.status} reason={e.rejectionReason} /></td>
                     <td className="px-4 py-2 text-right font-mono">{formatBRL(e.enrollmentValue)}</td>
                     <td className="px-4 py-2 text-right font-mono text-muted-foreground">{formatBRL(e.monthlyFee)}</td>
                     <td className="px-4 py-2 text-right font-mono">{formatBRL(e.materialValue)}</td>
