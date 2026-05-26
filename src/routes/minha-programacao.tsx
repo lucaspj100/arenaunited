@@ -26,7 +26,7 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { ptBR } from "date-fns/locale/pt-BR";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export const Route = createFileRoute("/minha-programacao")({
