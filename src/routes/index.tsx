@@ -270,6 +270,11 @@ function Index() {
                 Agenda da Equipe
               </Link>
               {isAdmin && (
+                <Link to="/marca" className="flex items-center gap-1 px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
+                  <Palette className="size-3.5" /> Marca
+                </Link>
+              )}
+              {isAdmin && (
                 <Link to="/fanaticos" className="px-3 py-2 rounded-lg bg-gold/15 border border-gold/40 text-gold text-xs font-semibold hover:bg-gold/25">
                   Fanáticos
                 </Link>
