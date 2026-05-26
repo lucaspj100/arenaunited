@@ -422,6 +422,7 @@ function Index() {
         open={!!editingId}
         onOpenChange={(o) => !o && setEditingId(null)}
         canAssignDirector={isAdmin}
+        canManageFanaticos={isAdmin}
         onSave={(patch) => {
           if (!editingId) return;
           updateSeller(editingId, patch);
