@@ -21,9 +21,11 @@ import {
   deleteEnrollment,
   fetchEnrollments,
   updateEnrollment,
+  setEnrollmentStatus,
 } from "@/lib/enrollments";
 import { EnrollmentFormDialog } from "@/components/EnrollmentFormDialog";
-import { PeriodSelector } from "./minhas-comissoes";
+import { PeriodSelector, StatusBadge } from "./minhas-comissoes";
+import { Check, X } from "lucide-react";
 
 export const Route = createFileRoute("/comissoes-equipe")({
   beforeLoad: async () => {
@@ -105,7 +107,7 @@ function ComissoesEquipe() {
 
   const aggregates: AggRow[] = useMemo(() => {
     return filteredSellers.map((s) => {
-      const list = enrollments.filter((e) => e.sellerId === s.id);
+      const list = enrollments.filter((e) => e.sellerId === s.id && e.status === "approved");
       const enroll = list.reduce((a, e) => a + e.enrollmentValue, 0);
       const monthly = list.reduce((a, e) => a + e.monthlyFee, 0);
       const material = list.reduce((a, e) => a + e.materialValue, 0);
