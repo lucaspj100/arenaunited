@@ -309,11 +309,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_director_like: { Args: { _user_id: string }; Returns: boolean }
       is_director_of: { Args: { _seller_id: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "vendedor" | "diretor"
+      app_role: "admin" | "vendedor" | "diretor" | "ceo" | "presidente"
       enrollment_status: "pending" | "approved" | "rejected"
       interview_status:
         | "marcada"
@@ -450,7 +451,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "vendedor", "diretor"],
+      app_role: ["admin", "vendedor", "diretor", "ceo", "presidente"],
       enrollment_status: ["pending", "approved", "rejected"],
       interview_status: [
         "marcada",
