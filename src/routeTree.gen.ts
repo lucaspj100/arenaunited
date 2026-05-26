@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as MinhasComissoesRouteImport } from './routes/minhas-comissoes'
 import { Route as MinhaProgramacaoRouteImport } from './routes/minha-programacao'
+import { Route as MarcaRouteImport } from './routes/marca'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FanaticosRouteImport } from './routes/fanaticos'
 import { Route as ComissoesEquipeRouteImport } from './routes/comissoes-equipe'
@@ -33,6 +34,11 @@ const MinhasComissoesRoute = MinhasComissoesRouteImport.update({
 const MinhaProgramacaoRoute = MinhaProgramacaoRouteImport.update({
   id: '/minha-programacao',
   path: '/minha-programacao',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarcaRoute = MarcaRouteImport.update({
+  id: '/marca',
+  path: '/marca',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/comissoes-equipe': typeof ComissoesEquipeRoute
   '/fanaticos': typeof FanaticosRoute
   '/login': typeof LoginRoute
+  '/marca': typeof MarcaRoute
   '/minha-programacao': typeof MinhaProgramacaoRoute
   '/minhas-comissoes': typeof MinhasComissoesRoute
   '/perfil': typeof PerfilRoute
@@ -91,6 +98,7 @@ export interface FileRoutesByTo {
   '/comissoes-equipe': typeof ComissoesEquipeRoute
   '/fanaticos': typeof FanaticosRoute
   '/login': typeof LoginRoute
+  '/marca': typeof MarcaRoute
   '/minha-programacao': typeof MinhaProgramacaoRoute
   '/minhas-comissoes': typeof MinhasComissoesRoute
   '/perfil': typeof PerfilRoute
@@ -104,6 +112,7 @@ export interface FileRoutesById {
   '/comissoes-equipe': typeof ComissoesEquipeRoute
   '/fanaticos': typeof FanaticosRoute
   '/login': typeof LoginRoute
+  '/marca': typeof MarcaRoute
   '/minha-programacao': typeof MinhaProgramacaoRoute
   '/minhas-comissoes': typeof MinhasComissoesRoute
   '/perfil': typeof PerfilRoute
@@ -118,6 +127,7 @@ export interface FileRouteTypes {
     | '/comissoes-equipe'
     | '/fanaticos'
     | '/login'
+    | '/marca'
     | '/minha-programacao'
     | '/minhas-comissoes'
     | '/perfil'
@@ -130,6 +140,7 @@ export interface FileRouteTypes {
     | '/comissoes-equipe'
     | '/fanaticos'
     | '/login'
+    | '/marca'
     | '/minha-programacao'
     | '/minhas-comissoes'
     | '/perfil'
@@ -142,6 +153,7 @@ export interface FileRouteTypes {
     | '/comissoes-equipe'
     | '/fanaticos'
     | '/login'
+    | '/marca'
     | '/minha-programacao'
     | '/minhas-comissoes'
     | '/perfil'
@@ -155,6 +167,7 @@ export interface RootRouteChildren {
   ComissoesEquipeRoute: typeof ComissoesEquipeRoute
   FanaticosRoute: typeof FanaticosRoute
   LoginRoute: typeof LoginRoute
+  MarcaRoute: typeof MarcaRoute
   MinhaProgramacaoRoute: typeof MinhaProgramacaoRoute
   MinhasComissoesRoute: typeof MinhasComissoesRoute
   PerfilRoute: typeof PerfilRoute
@@ -181,6 +194,13 @@ declare module '@tanstack/react-router' {
       path: '/minha-programacao'
       fullPath: '/minha-programacao'
       preLoaderRoute: typeof MinhaProgramacaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marca': {
+      id: '/marca'
+      path: '/marca'
+      fullPath: '/marca'
+      preLoaderRoute: typeof MarcaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -243,6 +263,7 @@ const rootRouteChildren: RootRouteChildren = {
   ComissoesEquipeRoute: ComissoesEquipeRoute,
   FanaticosRoute: FanaticosRoute,
   LoginRoute: LoginRoute,
+  MarcaRoute: MarcaRoute,
   MinhaProgramacaoRoute: MinhaProgramacaoRoute,
   MinhasComissoesRoute: MinhasComissoesRoute,
   PerfilRoute: PerfilRoute,

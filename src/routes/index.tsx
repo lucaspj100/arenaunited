@@ -19,8 +19,9 @@ import { MyWeeklyResultsDialog } from "@/components/MyWeeklyResultsDialog";
 import { AuthBar } from "@/components/AuthBar";
 import { WeeklyCompetitions } from "@/components/WeeklyCompetitions";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { Plus, Trophy, Flame, Users, Loader2, GraduationCap, Crown, ImageUp, Pencil } from "lucide-react";
-import { useBrandLogo, uploadBrandLogo, useBrandText, saveBrandText, type BrandText } from "@/hooks/useBrandLogo";
+import { Plus, Trophy, Flame, Users, Loader2, GraduationCap, Crown, Pencil, Palette } from "lucide-react";
+import { useBrandText, saveBrandText, type BrandText } from "@/hooks/useBrandLogo";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -46,9 +47,6 @@ function Index() {
   const isAdmin = role === "admin";
   const [teamTab, setTeamTab] = useState<"all" | "mine">("all");
   const [enrollAgg, setEnrollAgg] = useState<Record<string, { monthly: number; commission: number }>>({});
-  const { logoUrl, refresh: refreshLogo } = useBrandLogo();
-  const [uploadingLogo, setUploadingLogo] = useState(false);
-  const logoInputRef = useRef<HTMLInputElement>(null);
   const { text: brandText, refresh: refreshBrandText } = useBrandText();
   const [editingBrand, setEditingBrand] = useState(false);
   const [brandDraft, setBrandDraft] = useState<BrandText>(brandText);
@@ -73,22 +71,6 @@ function Index() {
       alert("Não foi possível salvar: " + ((e as Error)?.message ?? "erro"));
     } finally {
       setSavingBrand(false);
-    }
-  };
-
-  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    setUploadingLogo(true);
-    try {
-      await uploadBrandLogo(file);
-      await refreshLogo();
-    } catch (err) {
-      console.error(err);
-      alert("Não foi possível atualizar a logo: " + ((err as Error)?.message ?? "erro"));
-    } finally {
-      setUploadingLogo(false);
     }
   };
 
@@ -219,50 +201,18 @@ function Index() {
     <main className="min-h-screen px-4 md:px-8 py-8 max-w-7xl mx-auto">
       <header className="flex flex-wrap items-center justify-between gap-4 mb-10">
         <div className="flex items-center gap-3">
-          <div className="relative group">
-            <button
-              type="button"
-              onClick={() => isAdmin && logoInputRef.current?.click()}
-              disabled={!isAdmin || uploadingLogo}
-              className={`relative size-16 md:size-[68px] rounded-2xl flex items-center justify-center overflow-hidden transition-colors ${isAdmin ? "cursor-pointer" : "cursor-default"}`}
-              style={{
-                background:
-                  "linear-gradient(135deg, rgba(8,14,32,0.95), rgba(0,0,0,0.55))",
-                border: "1px solid rgba(0, 102, 255, 0.35)",
-                boxShadow:
-                  "0 0 18px rgba(0,102,255,0.20), inset 0 0 0 1px rgba(255,255,255,0.04)",
-              }}
-              title={isAdmin ? "Clique para trocar a logo" : "United Performance"}
-              aria-label={isAdmin ? "Trocar logo" : "Logo"}
+          {isAdmin ? (
+            <Link
+              to="/marca"
+              title="Editar identidade visual"
+              aria-label="Editar identidade visual"
+              className="hover:opacity-90 transition-opacity"
             >
-              <img
-                src={logoUrl}
-                alt="United"
-                draggable={false}
-                decoding="async"
-                className="w-[78%] h-[78%] object-contain select-none"
-                style={{ imageRendering: "auto" }}
-              />
-              {isAdmin && (
-                <span className="absolute inset-0 flex items-center justify-center bg-united-navy/70 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
-                  {uploadingLogo ? (
-                    <Loader2 className="size-5 animate-spin text-gold" />
-                  ) : (
-                    <ImageUp className="size-5 text-gold" />
-                  )}
-                </span>
-              )}
-            </button>
-            {isAdmin && (
-              <input
-                ref={logoInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                className="hidden"
-                onChange={handleLogoChange}
-              />
-            )}
-          </div>
+              <BrandLogo variant="compact" />
+            </Link>
+          ) : (
+            <BrandLogo variant="compact" />
+          )}
           <div className="group/brand relative">
             <h1 className="font-display font-black text-2xl md:text-3xl leading-none tracking-tight">
               {(() => {
@@ -319,6 +269,11 @@ function Index() {
               <Link to="/agenda-equipe" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
                 Agenda da Equipe
               </Link>
+              {isAdmin && (
+                <Link to="/marca" className="flex items-center gap-1 px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
+                  <Palette className="size-3.5" /> Marca
+                </Link>
+              )}
               {isAdmin && (
                 <Link to="/fanaticos" className="px-3 py-2 rounded-lg bg-gold/15 border border-gold/40 text-gold text-xs font-semibold hover:bg-gold/25">
                   Fanáticos
