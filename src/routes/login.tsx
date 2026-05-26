@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, LogIn } from "lucide-react";
-import unitedLogo from "@/assets/united-logo.jpg";
+import { useBrandLogo } from "@/hooks/useBrandLogo";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -17,6 +17,7 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { logoUrl } = useBrandLogo();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +42,7 @@ function LoginPage() {
           <div className="relative">
             <div className="absolute inset-0 rounded-3xl blur-2xl bg-primary/40" />
             <div className="relative size-24 rounded-3xl bg-gradient-to-br from-united-navy to-secondary border border-primary/40 flex items-center justify-center shadow-[var(--shadow-glow)] overflow-hidden">
-              <img src={unitedLogo} alt="United" className="size-16 object-contain" />
+              <img src={logoUrl} alt="United" className="size-16 object-contain" />
             </div>
           </div>
           <h1 className="mt-5 font-display font-black text-3xl tracking-tight text-center">
