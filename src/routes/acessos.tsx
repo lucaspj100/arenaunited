@@ -225,6 +225,7 @@ function AccessesPage() {
 function RoleEditor({
   invite,
   onSave,
+  isAdmin,
 }: {
   invite: Invite;
   onSave: (
@@ -232,6 +233,7 @@ function RoleEditor({
     appRole: "vendedor" | "diretor" | "admin",
     sellerRole: "consultor" | "gerente",
   ) => Promise<void>;
+  isAdmin: boolean;
 }) {
   const [appRole, setAppRole] = useState<"vendedor" | "diretor" | "admin">(invite.app_role);
   const [sellerRole, setSellerRole] = useState<"consultor" | "gerente">(invite.role);
@@ -247,7 +249,9 @@ function RoleEditor({
       >
         <option value="vendedor">Vendedor</option>
         <option value="diretor">Diretor</option>
-        <option value="admin">Admin</option>
+        {(isAdmin || invite.app_role === "admin") && (
+          <option value="admin" disabled={!isAdmin}>Admin</option>
+        )}
       </select>
       <select
         value={sellerRole}
