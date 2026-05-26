@@ -43,7 +43,7 @@ function Index() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingMyId, setEditingMyId] = useState<string | null>(null);
   const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-  const { userId, email, role, isStaff } = useCurrentUser();
+  const { userId, email, role, isStaff, loading: authLoading } = useCurrentUser();
   const isAdmin = role === "admin";
   const [teamTab, setTeamTab] = useState<"all" | "mine">("all");
   const [enrollAgg, setEnrollAgg] = useState<Record<string, { monthly: number; commission: number }>>({});
@@ -78,6 +78,12 @@ function Index() {
   useEffect(() => {
     saveLocalConfig(config);
   }, [config]);
+
+  useEffect(() => {
+    if (!authLoading && !userId) {
+      window.location.replace("/login");
+    }
+  }, [authLoading, userId]);
 
   useEffect(() => {
     let mounted = true;
@@ -319,10 +325,14 @@ function Index() {
       </header>
 
 
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
+      <section className={`grid grid-cols-2 ${isStaff ? "md:grid-cols-4" : "md:grid-cols-2"} gap-3 mb-10`}>
         <Stat icon={Users} label="Equipe ativa" value={String(sellers.length)} />
-        <Stat icon={Flame} label="Material vendido" value={formatBRL(totalMaterial)} accent />
-        <Stat icon={GraduationCap} label="Matrículas fechadas" value={String(totalDeals)} />
+        {isStaff && (
+          <Stat icon={Flame} label="Material vendido" value={formatBRL(totalMaterial)} accent />
+        )}
+        {isStaff && (
+          <Stat icon={GraduationCap} label="Matrículas fechadas" value={String(totalDeals)} />
+        )}
         <Stat icon={Crown} label="Líder do mês" value={ranked[0]?.name ?? "—"} highlight={`${ranked[0]?.score ?? 0}%`} gold />
       </section>
 
