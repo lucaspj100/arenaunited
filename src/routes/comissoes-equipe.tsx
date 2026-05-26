@@ -73,6 +73,16 @@ function ComissoesEquipe() {
   const isAdmin = role === "admin";
   const isDirector = role === "diretor";
 
+  const pendingCount = useMemo(
+    () => enrollments.filter((e) => e.status === "pending").length,
+    [enrollments],
+  );
+
+  const sortedEnrollments = useMemo(() => {
+    const rank = { pending: 0, approved: 1, rejected: 2 } as const;
+    return [...enrollments].sort((a, b) => rank[a.status] - rank[b.status]);
+  }, [enrollments]);
+
   const reload = async () => {
     setLoading(true);
     try {
@@ -356,7 +366,9 @@ function ComissoesEquipe() {
       <section className="rounded-2xl border border-border bg-card overflow-hidden">
         <div className="px-4 py-3 border-b border-border flex items-center justify-between">
           <h2 className="font-display font-bold">Matrículas do período</h2>
-          <span className="text-xs font-mono text-muted-foreground">{enrollments.length} item(s)</span>
+          <span className="text-xs font-mono text-muted-foreground">
+            {enrollments.length} item(s){pendingCount > 0 && <span className="ml-2 text-gold">· {pendingCount} pendente(s)</span>}
+          </span>
         </div>
         {enrollments.length === 0 ? (
           <div className="p-8 text-center text-sm text-muted-foreground">Nenhuma matrícula.</div>
