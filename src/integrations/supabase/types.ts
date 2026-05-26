@@ -169,6 +169,7 @@ export type Database = {
           goal_deals: number
           goal_material: number
           id: string
+          in_my_team: boolean
           material: number
           name: string
           position: number
@@ -188,6 +189,7 @@ export type Database = {
           goal_deals?: number
           goal_material?: number
           id?: string
+          in_my_team?: boolean
           material?: number
           name: string
           position?: number
@@ -207,6 +209,7 @@ export type Database = {
           goal_deals?: number
           goal_material?: number
           id?: string
+          in_my_team?: boolean
           material?: number
           name?: string
           position?: number
@@ -263,6 +266,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "vendedor" | "diretor"
