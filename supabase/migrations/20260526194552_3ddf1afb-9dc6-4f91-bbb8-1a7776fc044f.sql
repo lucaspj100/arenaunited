@@ -1,0 +1,1 @@
+ALTER VIEW public.weekly_seller_stats SET (security_invoker = off);
