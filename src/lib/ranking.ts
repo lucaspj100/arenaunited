@@ -75,11 +75,7 @@ export function rankSellers(sellers: Seller[], w: Weights) {
       if (b.deals !== a.deals) return b.deals - a.deals;
       // 1º desempate: material vendido
       if (b.material !== a.material) return b.material - a.material;
-      // 2º desempate: valor total (matrícula + material) — aproximado pelas metas
-      const totalA = a.material + a.deals * (a.goalMaterial / Math.max(a.goalDeals, 1));
-      const totalB = b.material + b.deals * (b.goalMaterial / Math.max(b.goalDeals, 1));
-      if (totalB !== totalA) return totalB - totalA;
-      // Último desempate: score de meta
+      // 2º desempate: score de cumprimento de meta
       return b.score - a.score;
     });
 }
