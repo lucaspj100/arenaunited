@@ -201,50 +201,18 @@ function Index() {
     <main className="min-h-screen px-4 md:px-8 py-8 max-w-7xl mx-auto">
       <header className="flex flex-wrap items-center justify-between gap-4 mb-10">
         <div className="flex items-center gap-3">
-          <div className="relative group">
-            <button
-              type="button"
-              onClick={() => isAdmin && logoInputRef.current?.click()}
-              disabled={!isAdmin || uploadingLogo}
-              className={`relative size-16 md:size-[68px] rounded-2xl flex items-center justify-center overflow-hidden transition-colors ${isAdmin ? "cursor-pointer" : "cursor-default"}`}
-              style={{
-                background:
-                  "linear-gradient(135deg, rgba(8,14,32,0.95), rgba(0,0,0,0.55))",
-                border: "1px solid rgba(0, 102, 255, 0.35)",
-                boxShadow:
-                  "0 0 18px rgba(0,102,255,0.20), inset 0 0 0 1px rgba(255,255,255,0.04)",
-              }}
-              title={isAdmin ? "Clique para trocar a logo" : "United Performance"}
-              aria-label={isAdmin ? "Trocar logo" : "Logo"}
+          {isAdmin ? (
+            <Link
+              to="/marca"
+              title="Editar identidade visual"
+              aria-label="Editar identidade visual"
+              className="hover:opacity-90 transition-opacity"
             >
-              <img
-                src={logoUrl}
-                alt="United"
-                draggable={false}
-                decoding="async"
-                className="w-[78%] h-[78%] object-contain select-none"
-                style={{ imageRendering: "auto" }}
-              />
-              {isAdmin && (
-                <span className="absolute inset-0 flex items-center justify-center bg-united-navy/70 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
-                  {uploadingLogo ? (
-                    <Loader2 className="size-5 animate-spin text-gold" />
-                  ) : (
-                    <ImageUp className="size-5 text-gold" />
-                  )}
-                </span>
-              )}
-            </button>
-            {isAdmin && (
-              <input
-                ref={logoInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                className="hidden"
-                onChange={handleLogoChange}
-              />
-            )}
-          </div>
+              <BrandLogo variant="compact" />
+            </Link>
+          ) : (
+            <BrandLogo variant="compact" />
+          )}
           <div className="group/brand relative">
             <h1 className="font-display font-black text-2xl md:text-3xl leading-none tracking-tight">
               {(() => {
