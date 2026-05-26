@@ -153,6 +153,9 @@ function Index() {
           />
           {role === "vendedor" && (
             <>
+              <Link to="/perfil" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
+                Meu Perfil
+              </Link>
               <Link to="/minha-programacao" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
                 Minha Programação
               </Link>
@@ -163,6 +166,9 @@ function Index() {
           )}
           {isAdmin && (
             <>
+              <Link to="/acessos" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
+                Acessos
+              </Link>
               <Link to="/agenda-equipe" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
                 Agenda da Equipe
               </Link>
