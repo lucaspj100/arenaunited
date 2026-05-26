@@ -196,7 +196,7 @@ function AccessesPage() {
                 <div className="text-xs text-muted-foreground font-mono truncate">{i.email}</div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <RoleEditor invite={i} onSave={saveRoles} />
+                <RoleEditor invite={i} onSave={saveRoles} isAdmin={isAdmin} />
                 {i.used_at ? (
                   <span className="flex items-center gap-1 text-[10px] text-primary font-mono">
                     <CheckCircle2 className="size-3" /> Usado
