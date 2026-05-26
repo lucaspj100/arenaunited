@@ -131,6 +131,13 @@ export type Database = {
             foreignKeyName: "enrollments_seller_id_fkey"
             columns: ["seller_id"]
             isOneToOne: false
+            referencedRelation: "monthly_seller_stats"
+            referencedColumns: ["seller_id"]
+          },
+          {
+            foreignKeyName: "enrollments_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
             referencedRelation: "sellers"
             referencedColumns: ["id"]
           },
@@ -181,6 +188,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "interviews_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_seller_stats"
+            referencedColumns: ["seller_id"]
+          },
           {
             foreignKeyName: "interviews_seller_id_fkey"
             columns: ["seller_id"]
@@ -289,6 +303,15 @@ export type Database = {
       }
     }
     Views: {
+      monthly_seller_stats: {
+        Row: {
+          month_completed: number | null
+          month_enrollments: number | null
+          month_scheduled: number | null
+          seller_id: string | null
+        }
+        Relationships: []
+      }
       weekly_seller_stats: {
         Row: {
           seller_id: string | null

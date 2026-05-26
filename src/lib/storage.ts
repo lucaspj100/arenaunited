@@ -66,7 +66,7 @@ const toSeller = (r: Row): Seller => ({
 });
 
 export async function fetchSellers(): Promise<Seller[]> {
-  const [sellersRes, statsRes] = await Promise.all([
+  const [sellersRes, statsRes, monthRes] = await Promise.all([
     supabase
       .from("sellers")
       .select(COLS)
@@ -75,15 +75,26 @@ export async function fetchSellers(): Promise<Seller[]> {
     supabase
       .from("weekly_seller_stats")
       .select("seller_id,week_scheduled,week_completed,week_enrollments"),
+    supabase
+      .from("monthly_seller_stats")
+      .select("seller_id,month_scheduled,month_completed"),
   ]);
   if (sellersRes.error) throw sellersRes.error;
   if (statsRes.error) console.warn("weekly_seller_stats error", statsRes.error);
+  if (monthRes.error) console.warn("monthly_seller_stats error", monthRes.error);
   const statsMap = new Map<string, { s: number; c: number; e: number }>();
   for (const r of statsRes.data ?? []) {
     statsMap.set(r.seller_id as string, {
       s: Number(r.week_scheduled) || 0,
       c: Number(r.week_completed) || 0,
       e: Number(r.week_enrollments) || 0,
+    });
+  }
+  const monthMap = new Map<string, { s: number; c: number }>();
+  for (const r of monthRes.data ?? []) {
+    monthMap.set(r.seller_id as string, {
+      s: Number(r.month_scheduled) || 0,
+      c: Number(r.month_completed) || 0,
     });
   }
   return (sellersRes.data as Row[]).map((r) => {
@@ -94,6 +105,9 @@ export async function fetchSellers(): Promise<Seller[]> {
       base.weekCompleted = st.c;
       base.weekEnrollments = st.e;
     }
+    const mt = monthMap.get(base.id);
+    base.monthScheduled = mt?.s ?? 0;
+    base.monthCompleted = mt?.c ?? 0;
     return base;
   });
 }

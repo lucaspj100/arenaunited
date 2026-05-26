@@ -67,8 +67,8 @@ export function SellerRow({
         )}
       </div>
 
-      <Metric label="Ent. marcadas" value={seller.weekScheduled} />
-      <Metric label="Ent. realizadas" value={seller.weekCompleted} />
+      <Metric label="Ent. marcadas (mês)" value={seller.monthScheduled ?? 0} />
+      <Metric label="Ent. realizadas (mês)" value={seller.monthCompleted ?? 0} />
       <Metric label="Matrículas" value={seller.deals} accent="primary" />
       <Metric label="Material" value={formatBRL(seller.material)} mono />
       {showFinancial && (
