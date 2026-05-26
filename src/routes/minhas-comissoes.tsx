@@ -335,3 +335,26 @@ function Card({
     </div>
   );
 }
+
+export function StatusBadge({
+  status,
+  reason,
+}: {
+  status: "pending" | "approved" | "rejected";
+  reason?: string | null;
+}) {
+  const map = {
+    pending: { label: "Pendente", cls: "bg-gold/20 text-gold border-gold/40" },
+    approved: { label: "Aprovada", cls: "bg-primary/15 text-primary border-primary/40" },
+    rejected: { label: "Recusada", cls: "bg-destructive/15 text-destructive border-destructive/40" },
+  } as const;
+  const cfg = map[status];
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-mono uppercase tracking-wider ${cfg.cls}`}
+      title={status === "rejected" && reason ? reason : undefined}
+    >
+      {cfg.label}
+    </span>
+  );
+}
