@@ -1,5 +1,5 @@
 import { Seller, formatBRL } from "@/lib/ranking";
-import { Trash2, TrendingUp, Pencil } from "lucide-react";
+import { Trash2, TrendingUp, Pencil, Crown } from "lucide-react";
 
 function initials(name: string) {
   return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
@@ -14,6 +14,9 @@ export function SellerRow({
   readOnly = false,
   showEditButton = true,
   editLabel,
+  showFinancial = false,
+  monthlyFees = 0,
+  estimatedCommission = 0,
 }: {
   seller: Seller & { score: number };
   rank: number;
@@ -23,14 +26,29 @@ export function SellerRow({
   readOnly?: boolean;
   showEditButton?: boolean;
   editLabel?: string;
+  showFinancial?: boolean;
+  monthlyFees?: number;
+  estimatedCommission?: number;
 }) {
-  const pct = (v: number, g: number) => Math.min((v / (g || 1)) * 100, 100);
+  const isPodium = rank <= 3;
+  const rankColor =
+    rank === 1 ? "text-gold" : rank === 2 ? "text-silver" : rank === 3 ? "text-bronze" : "text-muted-foreground";
 
   return (
-    <div className="group grid grid-cols-[40px_minmax(140px,1.5fr)_1fr_1fr_70px_56px] gap-3 items-center px-4 py-3 rounded-xl bg-card border border-border hover:border-primary/40 transition-colors">
-      <div className="font-display font-bold text-lg text-muted-foreground">{rank}º</div>
+    <div
+      className={`group relative flex items-center gap-3 px-3 py-3 rounded-xl bg-card border transition-colors overflow-x-auto ${
+        isPodium ? "border-primary/30 hover:border-primary/60" : "border-border hover:border-primary/40"
+      }`}
+    >
+      {rank === 1 && (
+        <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl bg-gradient-to-b from-gold to-accent" />
+      )}
+      <div className={`font-display font-black text-lg w-8 text-center shrink-0 ${rankColor} flex items-center justify-center gap-1`}>
+        {rank === 1 && <Crown className="size-3.5 fill-current" />}
+        {rank}
+      </div>
 
-      <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center gap-2.5 min-w-0 w-[180px] shrink-0">
         <div className="size-10 rounded-full bg-secondary overflow-hidden flex items-center justify-center font-display font-bold text-sm shrink-0">
           {seller.avatar ? (
             <img src={seller.avatar} alt={seller.name} className="size-full object-cover" />
@@ -39,25 +57,36 @@ export function SellerRow({
           )}
         </div>
         {readOnly ? (
-          <span className="font-medium truncate min-w-0">{seller.name}</span>
+          <span className="font-semibold truncate min-w-0 text-sm">{seller.name}</span>
         ) : (
           <input
             value={seller.name}
             onChange={(e) => onChange({ name: e.target.value })}
-            className="bg-transparent font-medium truncate outline-none focus:bg-input rounded px-1 -mx-1 min-w-0 w-full"
+            className="bg-transparent font-semibold truncate text-sm outline-none focus:bg-input rounded px-1 -mx-1 min-w-0 w-full"
           />
         )}
       </div>
 
-      <NumCell value={seller.deals} onChange={(v) => onChange({ deals: v })} pct={pct(seller.deals, seller.goalDeals)} readOnly={readOnly} />
-      <NumCell value={seller.material} onChange={(v) => onChange({ material: v })} format={formatBRL} pct={pct(seller.material, seller.goalMaterial)} readOnly={readOnly} />
+      <Metric label="Ent. marcadas" value={seller.weekScheduled} />
+      <Metric label="Ent. realizadas" value={seller.weekCompleted} />
+      <Metric label="Matrículas" value={seller.deals} accent="primary" />
+      <Metric label="Material" value={formatBRL(seller.material)} mono />
+      {showFinancial && (
+        <>
+          <Metric label="Mensalidade" value={formatBRL(monthlyFees)} mono />
+          <Metric label="Comissão est." value={formatBRL(estimatedCommission)} mono accent="gold" />
+        </>
+      )}
 
-      <div className="flex items-center justify-end gap-1 font-mono font-bold text-primary">
-        <TrendingUp className="size-3" />
-        {seller.score}
+      <div className="flex flex-col items-end min-w-[64px] ml-auto shrink-0">
+        <div className="text-[9px] uppercase tracking-wider text-muted-foreground font-mono">Score</div>
+        <div className={`flex items-center gap-1 font-mono font-black text-base ${isPodium ? "text-gold" : "text-primary"}`}>
+          <TrendingUp className="size-3" />
+          {seller.score}
+        </div>
       </div>
 
-      <div className="flex items-center gap-1 justify-self-end">
+      <div className="flex items-center gap-1 shrink-0">
         {showEditButton && (
           <button
             onClick={onEdit}
@@ -82,36 +111,24 @@ export function SellerRow({
   );
 }
 
-function NumCell({
+function Metric({
+  label,
   value,
-  onChange,
-  format,
-  pct,
-  readOnly,
+  mono,
+  accent,
 }: {
-  value: number;
-  onChange: (v: number) => void;
-  format?: (v: number) => string;
-  pct: number;
-  readOnly?: boolean;
+  label: string;
+  value: number | string;
+  mono?: boolean;
+  accent?: "primary" | "gold" | "red";
 }) {
+  const color =
+    accent === "gold" ? "text-gold" : accent === "primary" ? "text-primary" : accent === "red" ? "text-accent" : "text-foreground";
   return (
-    <div className="relative min-w-0">
-      {readOnly ? (
-        <div className="font-mono text-sm tabular-nums px-1 py-0.5">{value}</div>
-      ) : (
-        <input
-          type="number"
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value) || 0)}
-          className="w-full bg-transparent font-mono text-sm tabular-nums outline-none focus:bg-input rounded px-1 py-0.5"
-        />
-      )}
-      <div className="text-[10px] text-muted-foreground font-mono truncate">
-        {format ? format(value) : value}
-      </div>
-      <div className="absolute -bottom-1 left-0 right-1 h-0.5 bg-border rounded-full overflow-hidden">
-        <div className="h-full bg-gradient-to-r from-primary to-accent" style={{ width: `${pct}%` }} />
+    <div className="flex flex-col min-w-[88px] shrink-0">
+      <div className="text-[9px] uppercase tracking-wider text-muted-foreground font-mono">{label}</div>
+      <div className={`font-display font-bold text-sm tabular-nums ${mono ? "font-mono" : ""} ${color} truncate`}>
+        {value}
       </div>
     </div>
   );

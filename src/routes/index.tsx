@@ -9,6 +9,7 @@ import {
   loadLocalConfig,
   saveLocalConfig,
 } from "@/lib/storage";
+import { fetchEnrollments } from "@/lib/enrollments";
 import { supabase } from "@/integrations/supabase/client";
 import { Podium } from "@/components/Podium";
 import { SellerRow } from "@/components/SellerRow";
@@ -18,14 +19,15 @@ import { MyWeeklyResultsDialog } from "@/components/MyWeeklyResultsDialog";
 import { AuthBar } from "@/components/AuthBar";
 import { WeeklyCompetitions } from "@/components/WeeklyCompetitions";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { Plus, Trophy, Flame, Users, Loader2 } from "lucide-react";
+import { Plus, Trophy, Flame, Users, Loader2, GraduationCap, Crown } from "lucide-react";
+import unitedLogo from "@/assets/united-logo.jpg";
 
 export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
-      { title: "Arena United — Ranking da equipe" },
-      { name: "description", content: "Ranking compartilhado da equipe com metas individuais e leaderboard em tempo real." },
+      { title: "United Performance — Arena Comercial" },
+      { name: "description", content: "Painel comercial da equipe United Idiomas com ranking, metas e performance em tempo real." },
     ],
   }),
 });
@@ -40,6 +42,7 @@ function Index() {
   const { userId, email, role, isStaff } = useCurrentUser();
   const isAdmin = role === "admin";
   const [teamTab, setTeamTab] = useState<"all" | "mine">("all");
+  const [enrollAgg, setEnrollAgg] = useState<Record<string, { monthly: number; commission: number }>>({});
 
   useEffect(() => {
     saveLocalConfig(config);
@@ -71,6 +74,27 @@ function Index() {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    let mounted = true;
+    fetchEnrollments()
+      .then((rows) => {
+        if (!mounted) return;
+        const agg: Record<string, { monthly: number; commission: number }> = {};
+        for (const r of rows) {
+          const cur = agg[r.sellerId] ?? { monthly: 0, commission: 0 };
+          cur.monthly += Number(r.monthlyFee) || 0;
+          cur.commission += Number(r.commissionAmount) || 0;
+          agg[r.sellerId] = cur;
+        }
+        setEnrollAgg(agg);
+      })
+      .catch((e) => console.warn("Não foi possível carregar matrículas:", e));
+    return () => {
+      mounted = false;
+    };
+  }, [isAdmin]);
 
   const setWeights = (weights: Weights) => setConfig({ ...config, weights });
 
@@ -142,12 +166,16 @@ function Index() {
     <main className="min-h-screen px-4 md:px-8 py-8 max-w-7xl mx-auto">
       <header className="flex flex-wrap items-center justify-between gap-4 mb-10">
         <div className="flex items-center gap-3">
-          <div className="size-12 rounded-2xl bg-gradient-to-br from-primary to-bronze flex items-center justify-center shadow-[var(--shadow-glow)]">
-            <Trophy className="size-6 text-primary-foreground" />
+          <div className="size-14 rounded-2xl bg-gradient-to-br from-united-navy to-secondary border border-primary/30 flex items-center justify-center shadow-[var(--shadow-glow)] overflow-hidden">
+            <img src={unitedLogo} alt="United" className="size-10 object-contain" />
           </div>
           <div>
-            <h1 className="font-display font-black text-2xl md:text-3xl leading-none">Arena United</h1>
-            <p className="text-xs text-muted-foreground mt-1">Leaderboard da equipe · {config.period}</p>
+            <h1 className="font-display font-black text-2xl md:text-3xl leading-none tracking-tight">
+              United <span className="text-primary">Performance</span>
+            </h1>
+            <p className="text-xs text-muted-foreground mt-1 uppercase tracking-[0.18em]">
+              Painel comercial da equipe <span className="text-accent">·</span> {config.period}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -191,10 +219,10 @@ function Index() {
 
 
       <section className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
-        <Stat icon={Users} label="Vendedores" value={String(sellers.length)} />
+        <Stat icon={Users} label="Equipe ativa" value={String(sellers.length)} />
         <Stat icon={Flame} label="Material vendido" value={formatBRL(totalMaterial)} accent />
-        <Stat icon={Trophy} label="Nº de vendas" value={String(totalDeals)} />
-        <Stat icon={Flame} label="Líder" value={ranked[0]?.name ?? "—"} highlight={`${ranked[0]?.score ?? 0}%`} />
+        <Stat icon={GraduationCap} label="Matrículas fechadas" value={String(totalDeals)} />
+        <Stat icon={Crown} label="Líder do mês" value={ranked[0]?.name ?? "—"} highlight={`${ranked[0]?.score ?? 0}%`} gold />
       </section>
 
       {loading && (
@@ -272,17 +300,10 @@ function Index() {
               </button>
             )}
           </div>
-          <div className="hidden md:grid grid-cols-[40px_minmax(140px,1.5fr)_1fr_1fr_70px_56px] gap-3 px-4 pb-2 text-[11px] uppercase tracking-wider text-muted-foreground font-mono">
-            <div>#</div>
-            <div>Vendedor</div>
-            <div>Nº vendas</div>
-            <div>Material</div>
-            <div className="text-right">Score</div>
-            <div></div>
-          </div>
           <div className="space-y-2">
             {visibleRanked.map((s, i) => {
               const isMine = role === "vendedor" && s.userId === userId;
+              const extra = enrollAgg[s.id];
               return (
                 <SellerRow
                   key={s.id}
@@ -294,6 +315,9 @@ function Index() {
                   readOnly={!isStaff}
                   showEditButton={isStaff || isMine}
                   editLabel={isMine && !isStaff ? "Editar meus resultados" : undefined}
+                  showFinancial={isAdmin}
+                  monthlyFees={extra?.monthly ?? 0}
+                  estimatedCommission={extra?.commission ?? 0}
                 />
               );
             })}
@@ -351,20 +375,32 @@ function Stat({
   value,
   accent,
   highlight,
+  gold,
 }: {
   icon: typeof Trophy;
   label: string;
   value: string;
   accent?: boolean;
   highlight?: string;
+  gold?: boolean;
 }) {
   return (
-    <div className={`rounded-2xl p-4 border ${accent ? "bg-gradient-to-br from-primary/15 to-transparent border-primary/30" : "bg-card border-border"}`}>
-      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-        <Icon className="size-3.5" /> {label}
+    <div
+      className={`relative rounded-2xl p-4 border overflow-hidden ${
+        gold
+          ? "bg-gradient-to-br from-gold/15 via-card to-card border-gold/40 shadow-[var(--shadow-gold)]"
+          : accent
+          ? "bg-gradient-to-br from-primary/20 via-card to-card border-primary/40"
+          : "bg-card border-border"
+      }`}
+    >
+      {gold && <div className="absolute top-0 right-0 w-1 h-full bg-gradient-to-b from-gold to-transparent" />}
+      {accent && !gold && <div className="absolute top-0 right-0 w-1 h-full bg-accent" />}
+      <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.15em] text-muted-foreground mb-2 font-mono">
+        <Icon className={`size-3.5 ${gold ? "text-gold" : accent ? "text-accent" : "text-primary"}`} /> {label}
       </div>
-      <div className="font-display font-bold text-lg md:text-xl truncate">{value}</div>
-      {highlight && <div className="text-xs font-mono text-primary mt-1">{highlight}</div>}
+      <div className={`font-display font-black text-lg md:text-xl truncate ${gold ? "text-gold" : ""}`}>{value}</div>
+      {highlight && <div className={`text-xs font-mono mt-1 ${gold ? "text-gold/80" : "text-primary"}`}>{highlight}</div>}
     </div>
   );
 }
