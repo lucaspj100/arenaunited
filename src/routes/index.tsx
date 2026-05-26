@@ -439,6 +439,7 @@ function Index() {
         seller={sellers.find((s) => s.id === editingId) ?? null}
         open={!!editingId}
         onOpenChange={(o) => !o && setEditingId(null)}
+        canAssignDirector={isAdmin}
         onSave={(patch) => {
           if (!editingId) return;
           updateSeller(editingId, patch);
