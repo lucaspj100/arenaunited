@@ -21,12 +21,14 @@ export function EditSellerDialog({
   onOpenChange,
   onSave,
   canAssignDirector = false,
+  canManageFanaticos = false,
 }: {
   seller: Seller | null;
   open: boolean;
   onOpenChange: (o: boolean) => void;
   onSave: (patch: Partial<Seller>) => void;
   canAssignDirector?: boolean;
+  canManageFanaticos?: boolean;
 }) {
   const [form, setForm] = useState<Seller | null>(seller);
   const fileRef = useRef<HTMLInputElement>(null);
