@@ -33,6 +33,9 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  // Render title with "United" highlighted if it appears as the first word
+  // (e.g. "United Performance" → United <span>Performance</span>)
+
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState(() => loadLocalConfig());
