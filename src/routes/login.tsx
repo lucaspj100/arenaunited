@@ -41,8 +41,24 @@ function LoginPage() {
         <div className="flex flex-col items-center mb-8">
           <div className="relative">
             <div className="absolute inset-0 rounded-3xl blur-2xl bg-primary/40" />
-            <div className="relative size-24 rounded-3xl bg-gradient-to-br from-united-navy to-secondary border border-primary/40 flex items-center justify-center shadow-[var(--shadow-glow)] overflow-hidden">
-              <img src={logoUrl} alt="United" className="size-16 object-contain" />
+            <div
+              className="relative size-24 rounded-3xl flex items-center justify-center overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(8,14,32,0.95), rgba(0,0,0,0.55))",
+                border: "1px solid rgba(0, 102, 255, 0.40)",
+                boxShadow:
+                  "0 0 28px rgba(0,102,255,0.25), inset 0 0 0 1px rgba(255,255,255,0.05)",
+              }}
+            >
+              <img
+                src={logoUrl}
+                alt="United"
+                draggable={false}
+                decoding="async"
+                className="w-[78%] h-[78%] object-contain select-none"
+                style={{ imageRendering: "auto" }}
+              />
             </div>
           </div>
           <h1 className="mt-5 font-display font-black text-3xl tracking-tight text-center">
