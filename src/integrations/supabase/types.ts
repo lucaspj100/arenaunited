@@ -288,6 +288,7 @@ export type Database = {
       }
     }
     Functions: {
+      claim_seller_profile: { Args: never; Returns: string }
       current_seller_id: { Args: never; Returns: string }
       has_role: {
         Args: {
