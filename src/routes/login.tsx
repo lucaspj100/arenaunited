@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, LogIn, Trophy } from "lucide-react";
@@ -80,7 +80,10 @@ function LoginPage() {
         </button>
 
         <p className="text-[11px] text-muted-foreground text-center pt-1">
-          Acesso restrito. Usuários são criados pelo administrador.
+          Primeiro acesso?{" "}
+          <Link to="/cadastro" className="text-primary font-semibold hover:underline">
+            Criar conta
+          </Link>
         </p>
       </form>
     </main>
