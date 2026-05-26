@@ -19,8 +19,8 @@ import { MyWeeklyResultsDialog } from "@/components/MyWeeklyResultsDialog";
 import { AuthBar } from "@/components/AuthBar";
 import { WeeklyCompetitions } from "@/components/WeeklyCompetitions";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { Plus, Trophy, Flame, Users, Loader2, GraduationCap, Crown } from "lucide-react";
-import unitedLogo from "@/assets/united-logo.jpg";
+import { Plus, Trophy, Flame, Users, Loader2, GraduationCap, Crown, ImageUp } from "lucide-react";
+import { useBrandLogo, uploadBrandLogo } from "@/hooks/useBrandLogo";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -43,6 +43,25 @@ function Index() {
   const isAdmin = role === "admin";
   const [teamTab, setTeamTab] = useState<"all" | "mine">("all");
   const [enrollAgg, setEnrollAgg] = useState<Record<string, { monthly: number; commission: number }>>({});
+  const { logoUrl, refresh: refreshLogo } = useBrandLogo();
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploadingLogo(true);
+    try {
+      await uploadBrandLogo(file);
+      await refreshLogo();
+    } catch (err) {
+      console.error(err);
+      alert("Não foi possível atualizar a logo: " + ((err as Error)?.message ?? "erro"));
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
 
   useEffect(() => {
     saveLocalConfig(config);
@@ -166,8 +185,35 @@ function Index() {
     <main className="min-h-screen px-4 md:px-8 py-8 max-w-7xl mx-auto">
       <header className="flex flex-wrap items-center justify-between gap-4 mb-10">
         <div className="flex items-center gap-3">
-          <div className="size-14 rounded-2xl bg-gradient-to-br from-united-navy to-secondary border border-primary/30 flex items-center justify-center shadow-[var(--shadow-glow)] overflow-hidden">
-            <img src={unitedLogo} alt="United" className="size-10 object-contain" />
+          <div className="relative group">
+            <button
+              type="button"
+              onClick={() => isAdmin && logoInputRef.current?.click()}
+              disabled={!isAdmin || uploadingLogo}
+              className={`size-14 rounded-2xl bg-gradient-to-br from-united-navy to-secondary border border-primary/30 flex items-center justify-center shadow-[var(--shadow-glow)] overflow-hidden ${isAdmin ? "cursor-pointer hover:border-primary/60" : "cursor-default"}`}
+              title={isAdmin ? "Clique para trocar a logo" : "United Performance"}
+              aria-label={isAdmin ? "Trocar logo" : "Logo"}
+            >
+              <img src={logoUrl} alt="United" className="size-10 object-contain" />
+              {isAdmin && (
+                <span className="absolute inset-0 flex items-center justify-center bg-united-navy/70 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {uploadingLogo ? (
+                    <Loader2 className="size-5 animate-spin text-gold" />
+                  ) : (
+                    <ImageUp className="size-5 text-gold" />
+                  )}
+                </span>
+              )}
+            </button>
+            {isAdmin && (
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                className="hidden"
+                onChange={handleLogoChange}
+              />
+            )}
           </div>
           <div>
             <h1 className="font-display font-black text-2xl md:text-3xl leading-none tracking-tight">
