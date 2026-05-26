@@ -1,6 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { SellerRole } from "./commissions";
 
+export type EnrollmentStatus = "pending" | "approved" | "rejected";
+
 export type Enrollment = {
   id: string;
   sellerId: string;
@@ -14,6 +16,10 @@ export type Enrollment = {
   commissionAmount: number;
   notes: string | null;
   createdAt: string;
+  status: EnrollmentStatus;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  rejectionReason: string | null;
 };
 
 type Row = {
@@ -29,10 +35,14 @@ type Row = {
   commission_amount: number | string;
   notes: string | null;
   created_at: string;
+  status: EnrollmentStatus;
+  approved_by: string | null;
+  approved_at: string | null;
+  rejection_reason: string | null;
 };
 
 const COLS =
-  "id,seller_id,student_name,enrollment_date,enrollment_value,monthly_fee,material_value,role_snapshot,commission_rate,commission_amount,notes,created_at";
+  "id,seller_id,student_name,enrollment_date,enrollment_value,monthly_fee,material_value,role_snapshot,commission_rate,commission_amount,notes,created_at,status,approved_by,approved_at,rejection_reason";
 
 const toEnrollment = (r: Row): Enrollment => ({
   id: r.id,
@@ -47,6 +57,10 @@ const toEnrollment = (r: Row): Enrollment => ({
   commissionAmount: Number(r.commission_amount),
   notes: r.notes,
   createdAt: r.created_at,
+  status: r.status,
+  approvedBy: r.approved_by,
+  approvedAt: r.approved_at,
+  rejectionReason: r.rejection_reason,
 });
 
 export type EnrollmentInput = {
@@ -63,6 +77,7 @@ export async function fetchEnrollments(filters?: {
   sellerId?: string;
   from?: string;
   to?: string;
+  status?: EnrollmentStatus | EnrollmentStatus[];
 }): Promise<Enrollment[]> {
   let q = supabase
     .from("enrollments")
@@ -72,6 +87,10 @@ export async function fetchEnrollments(filters?: {
   if (filters?.sellerId) q = q.eq("seller_id", filters.sellerId);
   if (filters?.from) q = q.gte("enrollment_date", filters.from);
   if (filters?.to) q = q.lte("enrollment_date", filters.to);
+  if (filters?.status) {
+    if (Array.isArray(filters.status)) q = q.in("status", filters.status);
+    else q = q.eq("status", filters.status);
+  }
   const { data, error } = await q;
   if (error) throw error;
   return (data as Row[]).map(toEnrollment);
@@ -122,5 +141,16 @@ export async function updateEnrollment(
 
 export async function deleteEnrollment(id: string): Promise<void> {
   const { error } = await supabase.from("enrollments").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function setEnrollmentStatus(
+  id: string,
+  status: EnrollmentStatus,
+  rejectionReason?: string | null,
+): Promise<void> {
+  const patch: { status: EnrollmentStatus; rejection_reason?: string | null } = { status };
+  if (status === "rejected") patch.rejection_reason = rejectionReason ?? null;
+  const { error } = await supabase.from("enrollments").update(patch).eq("id", id);
   if (error) throw error;
 }
