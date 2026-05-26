@@ -9,7 +9,7 @@ export const Route = createFileRoute("/acessos")({
   head: () => ({ meta: [{ title: "Acessos da equipe — Arena United" }] }),
 });
 
-type AppRoleValue = "vendedor" | "diretor" | "ceo" | "presidente" | "admin";
+type AppRoleValue = "vendedor" | "franqueado" | "diretor" | "ceo" | "presidente" | "admin";
 
 type Invite = {
   id: string;
@@ -31,7 +31,7 @@ function AccessesPage() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [r, setR] = useState<"consultor" | "gerente">("consultor");
-  const [appRole, setAppRole] = useState<"vendedor" | "diretor" | "ceo" | "presidente">("vendedor");
+  const [appRole, setAppRole] = useState<"vendedor" | "franqueado" | "diretor" | "ceo" | "presidente">("vendedor");
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -152,6 +152,7 @@ function AccessesPage() {
             className="rounded-lg bg-input border border-border px-3 py-2 text-sm outline-none focus:border-primary"
           >
             <option value="vendedor">Vendedor</option>
+            <option value="franqueado">Franqueado</option>
             <option value="diretor">Diretor</option>
             <option value="ceo">CEO</option>
             <option value="presidente">Presidente</option>
@@ -159,7 +160,7 @@ function AccessesPage() {
           <select
             value={r}
             onChange={(e) => setR(e.target.value as "consultor" | "gerente")}
-            disabled={appRole !== "vendedor"}
+            disabled={appRole !== "vendedor" && appRole !== "franqueado"}
             className="rounded-lg bg-input border border-border px-3 py-2 text-sm outline-none focus:border-primary disabled:opacity-50"
           >
             <option value="consultor">Consultor</option>
@@ -252,6 +253,7 @@ function RoleEditor({
         title="Acesso"
       >
         <option value="vendedor">Vendedor</option>
+        <option value="franqueado">Franqueado</option>
         <option value="diretor">Diretor</option>
         <option value="ceo">CEO</option>
         <option value="presidente">Presidente</option>
@@ -262,7 +264,7 @@ function RoleEditor({
       <select
         value={sellerRole}
         onChange={(e) => setSellerRole(e.target.value as typeof sellerRole)}
-        disabled={appRole !== "vendedor"}
+        disabled={appRole !== "vendedor" && appRole !== "franqueado"}
         className="rounded-md bg-input border border-border px-2 py-1 text-[11px] outline-none focus:border-primary font-mono uppercase disabled:opacity-40"
         title="Cargo de venda"
       >
