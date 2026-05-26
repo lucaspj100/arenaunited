@@ -182,7 +182,11 @@ function MinhasComissoes() {
       </section>
 
       <section className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <Card label="Matrículas fechadas" value={String(totals.count)} />
+        <Card
+          label="Matrículas aprovadas"
+          value={String(totals.count)}
+          hint={totals.pendingCount ? `${totals.pendingCount} aguardando aprovação` : undefined}
+        />
         <Card label="Valor de matrículas" value={formatBRL(totals.totalEnroll)} accent />
         <Card label="Material acumulado" value={formatBRL(totals.totalMaterial)} accent />
         <Card label="Comissão prevista" value={formatBRL(totals.totalCommission)} accent />
