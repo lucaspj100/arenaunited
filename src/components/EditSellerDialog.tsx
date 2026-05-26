@@ -300,9 +300,9 @@ export function EditSellerDialog({
                 className="size-4 accent-primary"
               />
               <div>
-                <div className="text-sm font-semibold">Está na minha equipe</div>
+                <div className="text-sm font-semibold">Faz parte dos Fanáticos</div>
                 <div className="text-[11px] text-muted-foreground">
-                  Marque para aparecer na aba "Minha equipe" do ranking.
+                  Marque para incluir este vendedor no ranking exclusivo "Fanáticos".
                 </div>
               </div>
             </label>
