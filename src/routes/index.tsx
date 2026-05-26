@@ -19,8 +19,8 @@ import { MyWeeklyResultsDialog } from "@/components/MyWeeklyResultsDialog";
 import { AuthBar } from "@/components/AuthBar";
 import { WeeklyCompetitions } from "@/components/WeeklyCompetitions";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { Plus, Trophy, Flame, Users, Loader2, GraduationCap, Crown, ImageUp } from "lucide-react";
-import { useBrandLogo, uploadBrandLogo } from "@/hooks/useBrandLogo";
+import { Plus, Trophy, Flame, Users, Loader2, GraduationCap, Crown, ImageUp, Pencil } from "lucide-react";
+import { useBrandLogo, uploadBrandLogo, useBrandText, saveBrandText, type BrandText } from "@/hooks/useBrandLogo";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -46,6 +46,32 @@ function Index() {
   const { logoUrl, refresh: refreshLogo } = useBrandLogo();
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const { text: brandText, refresh: refreshBrandText } = useBrandText();
+  const [editingBrand, setEditingBrand] = useState(false);
+  const [brandDraft, setBrandDraft] = useState<BrandText>(brandText);
+  const [savingBrand, setSavingBrand] = useState(false);
+
+  useEffect(() => {
+    setBrandDraft(brandText);
+  }, [brandText]);
+
+  const openBrandEditor = () => {
+    setBrandDraft(brandText);
+    setEditingBrand(true);
+  };
+
+  const submitBrandEdit = async () => {
+    setSavingBrand(true);
+    try {
+      await saveBrandText(brandDraft);
+      await refreshBrandText();
+      setEditingBrand(false);
+    } catch (e) {
+      alert("Não foi possível salvar: " + ((e as Error)?.message ?? "erro"));
+    } finally {
+      setSavingBrand(false);
+    }
+  };
 
   const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -215,22 +241,27 @@ function Index() {
               />
             )}
           </div>
-          <div>
+          <div className="group/brand relative">
             <h1 className="font-display font-black text-2xl md:text-3xl leading-none tracking-tight">
-              United <span className="text-primary">Performance</span>
+              {renderTitle(brandText.title)}
             </h1>
             <p className="text-xs text-muted-foreground mt-1 uppercase tracking-[0.18em]">
-              Painel comercial da equipe <span className="text-accent">·</span> {config.period}
+              {brandText.subtitle} <span className="text-accent">·</span> {brandText.period}
             </p>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={openBrandEditor}
+                className="absolute -right-7 top-0 opacity-0 group-hover/brand:opacity-100 transition-opacity p-1 rounded text-muted-foreground hover:text-gold"
+                title="Editar título e período"
+                aria-label="Editar título e período"
+              >
+                <Pencil className="size-3.5" />
+              </button>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <input
-            value={config.period}
-            onChange={(e) => setConfig({ ...config, period: e.target.value })}
-            disabled={!isAdmin}
-            className="bg-input rounded-lg px-3 py-2 text-sm font-medium outline-none focus:ring-1 focus:ring-primary w-36 disabled:opacity-60"
-          />
           {role === "vendedor" && (
             <>
               <Link to="/perfil" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
