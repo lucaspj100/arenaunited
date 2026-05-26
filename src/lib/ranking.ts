@@ -12,6 +12,8 @@ export type Seller = {
   weekScheduled: number;
   weekCompleted: number;
   weekEnrollments: number;
+  monthScheduled?: number;
+  monthCompleted?: number;
   userId?: string | null;
   role: SellerRole;
   inMyTeam?: boolean;
