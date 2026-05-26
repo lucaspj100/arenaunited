@@ -168,7 +168,6 @@ function Index() {
     () => (userId ? sellers.some((s) => s.userId === userId && s.inMyTeam) : false),
     [sellers, userId],
   );
-  const canSeeFanaticos = isAdmin || (role === "vendedor" && myInFanaticos);
 
   const addSeller = async () => {
     const draft: Omit<Seller, "id"> = {
