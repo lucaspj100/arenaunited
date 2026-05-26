@@ -19,8 +19,8 @@ import { MyWeeklyResultsDialog } from "@/components/MyWeeklyResultsDialog";
 import { AuthBar } from "@/components/AuthBar";
 import { WeeklyCompetitions } from "@/components/WeeklyCompetitions";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { Plus, Trophy, Flame, Users, Loader2, GraduationCap, Crown, ImageUp } from "lucide-react";
-import { useBrandLogo, uploadBrandLogo } from "@/hooks/useBrandLogo";
+import { Plus, Trophy, Flame, Users, Loader2, GraduationCap, Crown, ImageUp, Pencil } from "lucide-react";
+import { useBrandLogo, uploadBrandLogo, useBrandText, saveBrandText, type BrandText } from "@/hooks/useBrandLogo";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -33,6 +33,9 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  // Render title with "United" highlighted if it appears as the first word
+  // (e.g. "United Performance" → United <span>Performance</span>)
+
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState(() => loadLocalConfig());
@@ -46,6 +49,32 @@ function Index() {
   const { logoUrl, refresh: refreshLogo } = useBrandLogo();
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const { text: brandText, refresh: refreshBrandText } = useBrandText();
+  const [editingBrand, setEditingBrand] = useState(false);
+  const [brandDraft, setBrandDraft] = useState<BrandText>(brandText);
+  const [savingBrand, setSavingBrand] = useState(false);
+
+  useEffect(() => {
+    setBrandDraft(brandText);
+  }, [brandText]);
+
+  const openBrandEditor = () => {
+    setBrandDraft(brandText);
+    setEditingBrand(true);
+  };
+
+  const submitBrandEdit = async () => {
+    setSavingBrand(true);
+    try {
+      await saveBrandText(brandDraft);
+      await refreshBrandText();
+      setEditingBrand(false);
+    } catch (e) {
+      alert("Não foi possível salvar: " + ((e as Error)?.message ?? "erro"));
+    } finally {
+      setSavingBrand(false);
+    }
+  };
 
   const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -215,22 +244,36 @@ function Index() {
               />
             )}
           </div>
-          <div>
+          <div className="group/brand relative">
             <h1 className="font-display font-black text-2xl md:text-3xl leading-none tracking-tight">
-              United <span className="text-primary">Performance</span>
+              {(() => {
+                const parts = brandText.title.split(" ");
+                if (parts.length < 2) return brandText.title;
+                const [first, ...rest] = parts;
+                return (
+                  <>
+                    {first} <span className="text-primary">{rest.join(" ")}</span>
+                  </>
+                );
+              })()}
             </h1>
             <p className="text-xs text-muted-foreground mt-1 uppercase tracking-[0.18em]">
-              Painel comercial da equipe <span className="text-accent">·</span> {config.period}
+              {brandText.subtitle} <span className="text-accent">·</span> {brandText.period}
             </p>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={openBrandEditor}
+                className="absolute -right-7 top-0 opacity-0 group-hover/brand:opacity-100 transition-opacity p-1 rounded text-muted-foreground hover:text-gold"
+                title="Editar título e período"
+                aria-label="Editar título e período"
+              >
+                <Pencil className="size-3.5" />
+              </button>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <input
-            value={config.period}
-            onChange={(e) => setConfig({ ...config, period: e.target.value })}
-            disabled={!isAdmin}
-            className="bg-input rounded-lg px-3 py-2 text-sm font-medium outline-none focus:ring-1 focus:ring-primary w-36 disabled:opacity-60"
-          />
           {role === "vendedor" && (
             <>
               <Link to="/perfil" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
@@ -411,6 +454,68 @@ function Index() {
           updateSeller(editingMyId, patch);
         }}
       />
+
+      {editingBrand && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => !savingBrand && setEditingBrand(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-card border border-primary/30 shadow-[var(--shadow-glow)] p-6 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div>
+              <h3 className="font-display font-black text-lg">Editar identidade do painel</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                Estas informações aparecem no topo do dashboard para toda a equipe.
+              </p>
+            </div>
+            <label className="block">
+              <div className="text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground mb-1.5">Título</div>
+              <input
+                value={brandDraft.title}
+                onChange={(e) => setBrandDraft({ ...brandDraft, title: e.target.value })}
+                className="w-full rounded-lg bg-input border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+              />
+            </label>
+            <label className="block">
+              <div className="text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground mb-1.5">Subtítulo</div>
+              <input
+                value={brandDraft.subtitle}
+                onChange={(e) => setBrandDraft({ ...brandDraft, subtitle: e.target.value })}
+                className="w-full rounded-lg bg-input border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+              />
+            </label>
+            <label className="block">
+              <div className="text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground mb-1.5">Período</div>
+              <input
+                value={brandDraft.period}
+                onChange={(e) => setBrandDraft({ ...brandDraft, period: e.target.value })}
+                className="w-full rounded-lg bg-input border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+              />
+            </label>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setEditingBrand(false)}
+                disabled={savingBrand}
+                className="px-4 py-2 rounded-lg bg-secondary text-sm font-semibold hover:bg-secondary/70 disabled:opacity-60"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={submitBrandEdit}
+                disabled={savingBrand}
+                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-60 inline-flex items-center gap-2"
+              >
+                {savingBrand && <Loader2 className="size-4 animate-spin" />}
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
