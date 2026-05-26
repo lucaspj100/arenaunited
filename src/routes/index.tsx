@@ -224,13 +224,27 @@ function Index() {
               type="button"
               onClick={() => isAdmin && logoInputRef.current?.click()}
               disabled={!isAdmin || uploadingLogo}
-              className={`size-14 rounded-2xl bg-gradient-to-br from-united-navy to-secondary border border-primary/30 flex items-center justify-center shadow-[var(--shadow-glow)] overflow-hidden ${isAdmin ? "cursor-pointer hover:border-primary/60" : "cursor-default"}`}
+              className={`relative size-16 md:size-[68px] rounded-2xl flex items-center justify-center overflow-hidden transition-colors ${isAdmin ? "cursor-pointer" : "cursor-default"}`}
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(8,14,32,0.95), rgba(0,0,0,0.55))",
+                border: "1px solid rgba(0, 102, 255, 0.35)",
+                boxShadow:
+                  "0 0 18px rgba(0,102,255,0.20), inset 0 0 0 1px rgba(255,255,255,0.04)",
+              }}
               title={isAdmin ? "Clique para trocar a logo" : "United Performance"}
               aria-label={isAdmin ? "Trocar logo" : "Logo"}
             >
-              <img src={logoUrl} alt="United" className="size-10 object-contain" />
+              <img
+                src={logoUrl}
+                alt="United"
+                draggable={false}
+                decoding="async"
+                className="w-[78%] h-[78%] object-contain select-none"
+                style={{ imageRendering: "auto" }}
+              />
               {isAdmin && (
-                <span className="absolute inset-0 flex items-center justify-center bg-united-navy/70 opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="absolute inset-0 flex items-center justify-center bg-united-navy/70 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
                   {uploadingLogo ? (
                     <Loader2 className="size-5 animate-spin text-gold" />
                   ) : (
