@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ComissoesEquipeRouteImport } from './routes/comissoes-equipe'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AgendaEquipeRouteImport } from './routes/agenda-equipe'
+import { Route as AcessosRouteImport } from './routes/acessos'
 import { Route as IndexRouteImport } from './routes/index'
 
 const PerfilRoute = PerfilRouteImport.update({
@@ -53,6 +54,11 @@ const AgendaEquipeRoute = AgendaEquipeRouteImport.update({
   path: '/agenda-equipe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AcessosRoute = AcessosRouteImport.update({
+  id: '/acessos',
+  path: '/acessos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -61,6 +67,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/acessos': typeof AcessosRoute
   '/agenda-equipe': typeof AgendaEquipeRoute
   '/cadastro': typeof CadastroRoute
   '/comissoes-equipe': typeof ComissoesEquipeRoute
@@ -71,6 +78,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/acessos': typeof AcessosRoute
   '/agenda-equipe': typeof AgendaEquipeRoute
   '/cadastro': typeof CadastroRoute
   '/comissoes-equipe': typeof ComissoesEquipeRoute
@@ -82,6 +90,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/acessos': typeof AcessosRoute
   '/agenda-equipe': typeof AgendaEquipeRoute
   '/cadastro': typeof CadastroRoute
   '/comissoes-equipe': typeof ComissoesEquipeRoute
@@ -94,6 +103,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/acessos'
     | '/agenda-equipe'
     | '/cadastro'
     | '/comissoes-equipe'
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/acessos'
     | '/agenda-equipe'
     | '/cadastro'
     | '/comissoes-equipe'
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/acessos'
     | '/agenda-equipe'
     | '/cadastro'
     | '/comissoes-equipe'
@@ -125,6 +137,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AcessosRoute: typeof AcessosRoute
   AgendaEquipeRoute: typeof AgendaEquipeRoute
   CadastroRoute: typeof CadastroRoute
   ComissoesEquipeRoute: typeof ComissoesEquipeRoute
@@ -185,6 +198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AgendaEquipeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/acessos': {
+      id: '/acessos'
+      path: '/acessos'
+      fullPath: '/acessos'
+      preLoaderRoute: typeof AcessosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -197,6 +217,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AcessosRoute: AcessosRoute,
   AgendaEquipeRoute: AgendaEquipeRoute,
   CadastroRoute: CadastroRoute,
   ComissoesEquipeRoute: ComissoesEquipeRoute,
