@@ -86,18 +86,21 @@ function MinhasComissoes() {
   }, [sellerId, range.from, range.to]);
 
   const totals = useMemo(() => {
-    const totalEnroll = enrollments.reduce((a, e) => a + e.enrollmentValue, 0);
-    const totalMonthly = enrollments.reduce((a, e) => a + e.monthlyFee, 0);
-    const totalMaterial = enrollments.reduce((a, e) => a + e.materialValue, 0);
-    const totalCommission = enrollments.reduce((a, e) => a + e.commissionAmount, 0);
+    const approved = enrollments.filter((e) => e.status === "approved");
+    const pending = enrollments.filter((e) => e.status === "pending");
+    const totalEnroll = approved.reduce((a, e) => a + e.enrollmentValue, 0);
+    const totalMonthly = approved.reduce((a, e) => a + e.monthlyFee, 0);
+    const totalMaterial = approved.reduce((a, e) => a + e.materialValue, 0);
+    const totalCommission = approved.reduce((a, e) => a + e.commissionAmount, 0);
     return {
-      count: enrollments.length,
+      count: approved.length,
+      pendingCount: pending.length,
       totalEnroll,
       totalMonthly,
       totalMaterial,
       totalCommission,
-      avgEnroll: enrollments.length ? totalEnroll / enrollments.length : 0,
-      avgMonthly: enrollments.length ? totalMonthly / enrollments.length : 0,
+      avgEnroll: approved.length ? totalEnroll / approved.length : 0,
+      avgMonthly: approved.length ? totalMonthly / approved.length : 0,
     };
   }, [enrollments]);
 
@@ -179,7 +182,11 @@ function MinhasComissoes() {
       </section>
 
       <section className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <Card label="Matrículas fechadas" value={String(totals.count)} />
+        <Card
+          label="Matrículas aprovadas"
+          value={String(totals.count)}
+          hint={totals.pendingCount ? `${totals.pendingCount} aguardando aprovação` : undefined}
+        />
         <Card label="Valor de matrículas" value={formatBRL(totals.totalEnroll)} accent />
         <Card label="Material acumulado" value={formatBRL(totals.totalMaterial)} accent />
         <Card label="Comissão prevista" value={formatBRL(totals.totalCommission)} accent />
@@ -219,6 +226,7 @@ function MinhasComissoes() {
                 <tr className="border-b border-border">
                   <th className="text-left px-4 py-2">Data</th>
                   <th className="text-left px-4 py-2">Aluno</th>
+                  <th className="text-left px-4 py-2">Status</th>
                   <th className="text-right px-4 py-2">Matrícula</th>
                   <th className="text-right px-4 py-2">Mensalidade</th>
                   <th className="text-right px-4 py-2">Material</th>
@@ -232,6 +240,7 @@ function MinhasComissoes() {
                   <tr key={e.id} className="border-b border-border/50 last:border-0 hover:bg-secondary/30">
                     <td className="px-4 py-2 font-mono">{e.enrollmentDate}</td>
                     <td className="px-4 py-2 font-medium">{e.studentName}</td>
+                    <td className="px-4 py-2"><StatusBadge status={e.status} reason={e.rejectionReason} /></td>
                     <td className="px-4 py-2 text-right font-mono">{formatBRL(e.enrollmentValue)}</td>
                     <td className="px-4 py-2 text-right font-mono text-muted-foreground">{formatBRL(e.monthlyFee)}</td>
                     <td className="px-4 py-2 text-right font-mono">{formatBRL(e.materialValue)}</td>
@@ -324,5 +333,28 @@ function Card({
       <div className="font-display font-bold text-lg md:text-xl tabular-nums truncate">{value}</div>
       {hint && <div className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider">{hint}</div>}
     </div>
+  );
+}
+
+export function StatusBadge({
+  status,
+  reason,
+}: {
+  status: "pending" | "approved" | "rejected";
+  reason?: string | null;
+}) {
+  const map = {
+    pending: { label: "Pendente", cls: "bg-gold/20 text-gold border-gold/40" },
+    approved: { label: "Aprovada", cls: "bg-primary/15 text-primary border-primary/40" },
+    rejected: { label: "Recusada", cls: "bg-destructive/15 text-destructive border-destructive/40" },
+  } as const;
+  const cfg = map[status];
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-mono uppercase tracking-wider ${cfg.cls}`}
+      title={status === "rejected" && reason ? reason : undefined}
+    >
+      {cfg.label}
+    </span>
   );
 }

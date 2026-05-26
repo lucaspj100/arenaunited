@@ -21,9 +21,11 @@ import {
   deleteEnrollment,
   fetchEnrollments,
   updateEnrollment,
+  setEnrollmentStatus,
 } from "@/lib/enrollments";
 import { EnrollmentFormDialog } from "@/components/EnrollmentFormDialog";
-import { PeriodSelector } from "./minhas-comissoes";
+import { PeriodSelector, StatusBadge } from "./minhas-comissoes";
+import { Check, X } from "lucide-react";
 
 export const Route = createFileRoute("/comissoes-equipe")({
   beforeLoad: async () => {
@@ -71,6 +73,16 @@ function ComissoesEquipe() {
   const isAdmin = role === "admin";
   const isDirector = role === "diretor";
 
+  const pendingCount = useMemo(
+    () => enrollments.filter((e) => e.status === "pending").length,
+    [enrollments],
+  );
+
+  const sortedEnrollments = useMemo(() => {
+    const rank = { pending: 0, approved: 1, rejected: 2 } as const;
+    return [...enrollments].sort((a, b) => rank[a.status] - rank[b.status]);
+  }, [enrollments]);
+
   const reload = async () => {
     setLoading(true);
     try {
@@ -105,7 +117,7 @@ function ComissoesEquipe() {
 
   const aggregates: AggRow[] = useMemo(() => {
     return filteredSellers.map((s) => {
-      const list = enrollments.filter((e) => e.sellerId === s.id);
+      const list = enrollments.filter((e) => e.sellerId === s.id && e.status === "approved");
       const enroll = list.reduce((a, e) => a + e.enrollmentValue, 0);
       const monthly = list.reduce((a, e) => a + e.monthlyFee, 0);
       const material = list.reduce((a, e) => a + e.materialValue, 0);
@@ -175,6 +187,25 @@ function ComissoesEquipe() {
     if (!confirm("Excluir esta matrícula?")) return;
     await deleteEnrollment(id);
     await reload();
+  };
+
+  const handleApprove = async (id: string) => {
+    try {
+      await setEnrollmentStatus(id, "approved");
+      await reload();
+    } catch (err) {
+      alert("Erro ao aprovar: " + ((err as Error)?.message ?? ""));
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    const reason = prompt("Motivo da recusa (opcional):") ?? "";
+    try {
+      await setEnrollmentStatus(id, "rejected", reason || null);
+      await reload();
+    } catch (err) {
+      alert("Erro ao recusar: " + ((err as Error)?.message ?? ""));
+    }
   };
 
   const rankings: { title: string; key: keyof AggRow; format: (v: number) => string }[] = [
@@ -335,7 +366,9 @@ function ComissoesEquipe() {
       <section className="rounded-2xl border border-border bg-card overflow-hidden">
         <div className="px-4 py-3 border-b border-border flex items-center justify-between">
           <h2 className="font-display font-bold">Matrículas do período</h2>
-          <span className="text-xs font-mono text-muted-foreground">{enrollments.length} item(s)</span>
+          <span className="text-xs font-mono text-muted-foreground">
+            {enrollments.length} item(s){pendingCount > 0 && <span className="ml-2 text-gold">· {pendingCount} pendente(s)</span>}
+          </span>
         </div>
         {enrollments.length === 0 ? (
           <div className="p-8 text-center text-sm text-muted-foreground">Nenhuma matrícula.</div>
@@ -347,27 +380,35 @@ function ComissoesEquipe() {
                   <th className="text-left px-4 py-2">Data</th>
                   <th className="text-left px-4 py-2">Vendedor</th>
                   <th className="text-left px-4 py-2">Aluno</th>
+                  <th className="text-left px-4 py-2">Status</th>
                   <th className="text-right px-4 py-2">Matr.</th>
                   <th className="text-right px-4 py-2">Mensal.</th>
                   <th className="text-right px-4 py-2">Material</th>
                   <th className="text-right px-4 py-2">Comissão</th>
-                  <th className="px-4 py-2 w-20"></th>
+                  <th className="px-4 py-2 w-32"></th>
                 </tr>
               </thead>
               <tbody>
-                {enrollments.map((e) => {
+                {sortedEnrollments.map((e) => {
                   const s = sellers.find((x) => x.id === e.sellerId);
                   return (
                     <tr key={e.id} className="border-b border-border/50 last:border-0 hover:bg-secondary/30">
                       <td className="px-4 py-2 font-mono">{e.enrollmentDate}</td>
                       <td className="px-4 py-2">{s?.name ?? "—"}</td>
                       <td className="px-4 py-2 font-medium">{e.studentName}</td>
+                      <td className="px-4 py-2"><StatusBadge status={e.status} reason={e.rejectionReason} /></td>
                       <td className="px-4 py-2 text-right font-mono">{formatBRL(e.enrollmentValue)}</td>
                       <td className="px-4 py-2 text-right font-mono text-muted-foreground">{formatBRL(e.monthlyFee)}</td>
                       <td className="px-4 py-2 text-right font-mono">{formatBRL(e.materialValue)}</td>
                       <td className="px-4 py-2 text-right font-mono text-primary font-bold">{formatBRL(e.commissionAmount)}</td>
                       <td className="px-4 py-2 text-right">
                         <div className="inline-flex gap-1">
+                          {e.status === "pending" && (
+                            <>
+                              <button onClick={() => handleApprove(e.id)} className="p-1.5 rounded-md bg-primary/15 text-primary hover:bg-primary/25" title="Aprovar"><Check className="size-3.5" /></button>
+                              <button onClick={() => handleReject(e.id)} className="p-1.5 rounded-md bg-destructive/15 text-destructive hover:bg-destructive/25" title="Recusar"><X className="size-3.5" /></button>
+                            </>
+                          )}
                           <button onClick={() => { setCreating(false); setEditing(e); }} className="p-1.5 rounded-md bg-secondary hover:bg-secondary/70"><Pencil className="size-3.5" /></button>
                           <button onClick={() => handleDelete(e.id)} className="p-1.5 rounded-md bg-destructive/15 text-destructive hover:bg-destructive/25"><Trash2 className="size-3.5" /></button>
                         </div>

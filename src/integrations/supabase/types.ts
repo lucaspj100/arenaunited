@@ -70,6 +70,8 @@ export type Database = {
       }
       enrollments: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           commission_amount: number
           commission_rate: number
           created_at: string
@@ -79,12 +81,16 @@ export type Database = {
           material_value: number
           monthly_fee: number
           notes: string | null
+          rejection_reason: string | null
           role_snapshot: Database["public"]["Enums"]["seller_role"]
           seller_id: string
+          status: Database["public"]["Enums"]["enrollment_status"]
           student_name: string
           updated_at: string
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           commission_amount?: number
           commission_rate?: number
           created_at?: string
@@ -94,12 +100,16 @@ export type Database = {
           material_value?: number
           monthly_fee?: number
           notes?: string | null
+          rejection_reason?: string | null
           role_snapshot: Database["public"]["Enums"]["seller_role"]
           seller_id: string
+          status?: Database["public"]["Enums"]["enrollment_status"]
           student_name: string
           updated_at?: string
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           commission_amount?: number
           commission_rate?: number
           created_at?: string
@@ -109,8 +119,10 @@ export type Database = {
           material_value?: number
           monthly_fee?: number
           notes?: string | null
+          rejection_reason?: string | null
           role_snapshot?: Database["public"]["Enums"]["seller_role"]
           seller_id?: string
+          status?: Database["public"]["Enums"]["enrollment_status"]
           student_name?: string
           updated_at?: string
         }
@@ -302,6 +314,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "vendedor" | "diretor"
+      enrollment_status: "pending" | "approved" | "rejected"
       interview_status:
         | "marcada"
         | "realizada"
@@ -438,6 +451,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "vendedor", "diretor"],
+      enrollment_status: ["pending", "approved", "rejected"],
       interview_status: [
         "marcada",
         "realizada",

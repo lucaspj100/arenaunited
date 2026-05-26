@@ -114,6 +114,7 @@ function Index() {
         if (!mounted) return;
         const agg: Record<string, { monthly: number; commission: number }> = {};
         for (const r of rows) {
+          if (r.status !== "approved") continue;
           const cur = agg[r.sellerId] ?? { monthly: 0, commission: 0 };
           cur.monthly += Number(r.monthlyFee) || 0;
           cur.commission += Number(r.commissionAmount) || 0;
