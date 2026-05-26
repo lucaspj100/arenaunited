@@ -21,7 +21,8 @@ type Invite = {
 };
 
 function AccessesPage() {
-  const { loading: ul, isStaff } = useCurrentUser();
+  const { loading: ul, isStaff, role } = useCurrentUser();
+  const isAdmin = role === "admin";
   const navigate = useNavigate();
   const [items, setItems] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(true);
@@ -195,7 +196,7 @@ function AccessesPage() {
                 <div className="text-xs text-muted-foreground font-mono truncate">{i.email}</div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <RoleEditor invite={i} onSave={saveRoles} />
+                <RoleEditor invite={i} onSave={saveRoles} isAdmin={isAdmin} />
                 {i.used_at ? (
                   <span className="flex items-center gap-1 text-[10px] text-primary font-mono">
                     <CheckCircle2 className="size-3" /> Usado
@@ -224,6 +225,7 @@ function AccessesPage() {
 function RoleEditor({
   invite,
   onSave,
+  isAdmin,
 }: {
   invite: Invite;
   onSave: (
@@ -231,6 +233,7 @@ function RoleEditor({
     appRole: "vendedor" | "diretor" | "admin",
     sellerRole: "consultor" | "gerente",
   ) => Promise<void>;
+  isAdmin: boolean;
 }) {
   const [appRole, setAppRole] = useState<"vendedor" | "diretor" | "admin">(invite.app_role);
   const [sellerRole, setSellerRole] = useState<"consultor" | "gerente">(invite.role);
@@ -246,7 +249,9 @@ function RoleEditor({
       >
         <option value="vendedor">Vendedor</option>
         <option value="diretor">Diretor</option>
-        <option value="admin">Admin</option>
+        {(isAdmin || invite.app_role === "admin") && (
+          <option value="admin" disabled={!isAdmin}>Admin</option>
+        )}
       </select>
       <select
         value={sellerRole}
