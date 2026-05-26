@@ -9,13 +9,21 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as MinhasComissoesRouteImport } from './routes/minhas-comissoes'
 import { Route as MinhaProgramacaoRouteImport } from './routes/minha-programacao'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ComissoesEquipeRouteImport } from './routes/comissoes-equipe'
+import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AgendaEquipeRouteImport } from './routes/agenda-equipe'
+import { Route as AcessosRouteImport } from './routes/acessos'
 import { Route as IndexRouteImport } from './routes/index'
 
+const PerfilRoute = PerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MinhasComissoesRoute = MinhasComissoesRouteImport.update({
   id: '/minhas-comissoes',
   path: '/minhas-comissoes',
@@ -36,9 +44,19 @@ const ComissoesEquipeRoute = ComissoesEquipeRouteImport.update({
   path: '/comissoes-equipe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CadastroRoute = CadastroRouteImport.update({
+  id: '/cadastro',
+  path: '/cadastro',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AgendaEquipeRoute = AgendaEquipeRouteImport.update({
   id: '/agenda-equipe',
   path: '/agenda-equipe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AcessosRoute = AcessosRouteImport.update({
+  id: '/acessos',
+  path: '/acessos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -49,67 +67,95 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/acessos': typeof AcessosRoute
   '/agenda-equipe': typeof AgendaEquipeRoute
+  '/cadastro': typeof CadastroRoute
   '/comissoes-equipe': typeof ComissoesEquipeRoute
   '/login': typeof LoginRoute
   '/minha-programacao': typeof MinhaProgramacaoRoute
   '/minhas-comissoes': typeof MinhasComissoesRoute
+  '/perfil': typeof PerfilRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/acessos': typeof AcessosRoute
   '/agenda-equipe': typeof AgendaEquipeRoute
+  '/cadastro': typeof CadastroRoute
   '/comissoes-equipe': typeof ComissoesEquipeRoute
   '/login': typeof LoginRoute
   '/minha-programacao': typeof MinhaProgramacaoRoute
   '/minhas-comissoes': typeof MinhasComissoesRoute
+  '/perfil': typeof PerfilRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/acessos': typeof AcessosRoute
   '/agenda-equipe': typeof AgendaEquipeRoute
+  '/cadastro': typeof CadastroRoute
   '/comissoes-equipe': typeof ComissoesEquipeRoute
   '/login': typeof LoginRoute
   '/minha-programacao': typeof MinhaProgramacaoRoute
   '/minhas-comissoes': typeof MinhasComissoesRoute
+  '/perfil': typeof PerfilRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/acessos'
     | '/agenda-equipe'
+    | '/cadastro'
     | '/comissoes-equipe'
     | '/login'
     | '/minha-programacao'
     | '/minhas-comissoes'
+    | '/perfil'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/acessos'
     | '/agenda-equipe'
+    | '/cadastro'
     | '/comissoes-equipe'
     | '/login'
     | '/minha-programacao'
     | '/minhas-comissoes'
+    | '/perfil'
   id:
     | '__root__'
     | '/'
+    | '/acessos'
     | '/agenda-equipe'
+    | '/cadastro'
     | '/comissoes-equipe'
     | '/login'
     | '/minha-programacao'
     | '/minhas-comissoes'
+    | '/perfil'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AcessosRoute: typeof AcessosRoute
   AgendaEquipeRoute: typeof AgendaEquipeRoute
+  CadastroRoute: typeof CadastroRoute
   ComissoesEquipeRoute: typeof ComissoesEquipeRoute
   LoginRoute: typeof LoginRoute
   MinhaProgramacaoRoute: typeof MinhaProgramacaoRoute
   MinhasComissoesRoute: typeof MinhasComissoesRoute
+  PerfilRoute: typeof PerfilRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/perfil': {
+      id: '/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PerfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/minhas-comissoes': {
       id: '/minhas-comissoes'
       path: '/minhas-comissoes'
@@ -138,11 +184,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ComissoesEquipeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cadastro': {
+      id: '/cadastro'
+      path: '/cadastro'
+      fullPath: '/cadastro'
+      preLoaderRoute: typeof CadastroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/agenda-equipe': {
       id: '/agenda-equipe'
       path: '/agenda-equipe'
       fullPath: '/agenda-equipe'
       preLoaderRoute: typeof AgendaEquipeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/acessos': {
+      id: '/acessos'
+      path: '/acessos'
+      fullPath: '/acessos'
+      preLoaderRoute: typeof AcessosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -157,22 +217,15 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AcessosRoute: AcessosRoute,
   AgendaEquipeRoute: AgendaEquipeRoute,
+  CadastroRoute: CadastroRoute,
   ComissoesEquipeRoute: ComissoesEquipeRoute,
   LoginRoute: LoginRoute,
   MinhaProgramacaoRoute: MinhaProgramacaoRoute,
   MinhasComissoesRoute: MinhasComissoesRoute,
+  PerfilRoute: PerfilRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
