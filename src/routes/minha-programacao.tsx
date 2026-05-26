@@ -16,6 +16,18 @@ import {
   updateInterview,
 } from "@/lib/interviews";
 import { ArrowLeft, CalendarDays, CheckCircle2, Loader2, Pencil, Plus, Trophy } from "lucide-react";
+import {
+  addMonths,
+  endOfMonth,
+  endOfWeek,
+  format,
+  isSameMonth,
+  isToday,
+  startOfMonth,
+  startOfWeek,
+} from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export const Route = createFileRoute("/minha-programacao")({
   beforeLoad: async () => {
@@ -38,6 +50,8 @@ function MinhaProgramacao() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Interview | null>(null);
   const [creating, setCreating] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(() => startOfMonth(new Date()));
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const reload = async (sid: string) => {
     setLoading(true);
@@ -65,6 +79,21 @@ function MinhaProgramacao() {
   const tomorrows = useMemo(
     () => interviews.filter((i) => i.scheduledDate === tomorrow),
     [interviews, tomorrow],
+  );
+
+  const interviewsByDate = useMemo(() => {
+    const map = new Map<string, Interview[]>();
+    for (const i of interviews) {
+      const arr = map.get(i.scheduledDate) ?? [];
+      arr.push(i);
+      map.set(i.scheduledDate, arr);
+    }
+    return map;
+  }, [interviews]);
+
+  const selectedItems = useMemo(
+    () => (selectedDate ? (interviewsByDate.get(selectedDate) ?? []) : []),
+    [interviewsByDate, selectedDate],
   );
 
   const countByStatus = (list: Interview[], filter: (i: Interview) => boolean) =>
@@ -193,6 +222,46 @@ function MinhaProgramacao() {
         emptyHint="Nenhuma entrevista para amanhã."
       />
 
+      <div className="h-8" />
+
+      <MonthCalendar
+        month={calendarMonth}
+        onPrev={() => setCalendarMonth((m) => addMonths(m, -1))}
+        onNext={() => setCalendarMonth((m) => addMonths(m, 1))}
+        onToday={() => {
+          setCalendarMonth(startOfMonth(new Date()));
+          setSelectedDate(todayISO());
+        }}
+        interviewsByDate={interviewsByDate}
+        selectedDate={selectedDate}
+        onSelectDate={setSelectedDate}
+      />
+
+      {selectedDate && (
+        <>
+          <div className="h-6" />
+          <AgendaTable
+            title={`Agenda de ${format(new Date(`${selectedDate}T00:00:00`), "dd 'de' MMMM", { locale: ptBR })}`}
+            items={selectedItems}
+            loading={loading}
+            canEditAll={canEditAll}
+            onEdit={(i) => {
+              setCreating(false);
+              setEditing(i);
+            }}
+            onDelete={
+              canEditAll
+                ? async (id) => {
+                    await deleteInterview(id);
+                    await reload(sellerId);
+                  }
+                : undefined
+            }
+            emptyHint="Nenhuma entrevista neste dia."
+          />
+        </>
+      )}
+
       <InterviewFormDialog
         open={creating || !!editing}
         onOpenChange={(o) => {
@@ -319,6 +388,118 @@ function AgendaTable({
           </table>
         </div>
       )}
+    </section>
+  );
+}
+
+function MonthCalendar({
+  month,
+  onPrev,
+  onNext,
+  onToday,
+  interviewsByDate,
+  selectedDate,
+  onSelectDate,
+}: {
+  month: Date;
+  onPrev: () => void;
+  onNext: () => void;
+  onToday: () => void;
+  interviewsByDate: Map<string, Interview[]>;
+  selectedDate: string | null;
+  onSelectDate: (iso: string) => void;
+}) {
+  const start = startOfWeek(startOfMonth(month), { weekStartsOn: 0 });
+  const end = endOfWeek(endOfMonth(month), { weekStartsOn: 0 });
+  const days: Date[] = [];
+  for (let d = start; d <= end; d = new Date(d.getTime() + 24 * 60 * 60 * 1000)) {
+    days.push(d);
+  }
+  const weekHeader = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+  return (
+    <section className="rounded-2xl border border-border bg-card overflow-hidden">
+      <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2">
+        <h3 className="font-display font-bold capitalize">
+          {format(month, "MMMM yyyy", { locale: ptBR })}
+        </h3>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={onToday}
+            className="px-2.5 py-1 rounded-md bg-secondary text-xs font-semibold hover:bg-secondary/70"
+          >
+            Hoje
+          </button>
+          <button
+            onClick={onPrev}
+            className="p-1.5 rounded-md bg-secondary hover:bg-secondary/70"
+            title="Mês anterior"
+          >
+            <ChevronLeft className="size-4" />
+          </button>
+          <button
+            onClick={onNext}
+            className="p-1.5 rounded-md bg-secondary hover:bg-secondary/70"
+            title="Próximo mês"
+          >
+            <ChevronRight className="size-4" />
+          </button>
+        </div>
+      </div>
+      <div className="p-2 md:p-3">
+        <div className="grid grid-cols-7 gap-1 mb-1 text-[10px] uppercase tracking-wider text-muted-foreground font-mono text-center">
+          {weekHeader.map((d) => (
+            <div key={d} className="py-1">
+              {d}
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {days.map((d) => {
+            const iso = format(d, "yyyy-MM-dd");
+            const items = interviewsByDate.get(iso) ?? [];
+            const inMonth = isSameMonth(d, month);
+            const isSel = selectedDate === iso;
+            const today = isToday(d);
+            const fechadas = items.filter((i) => i.status === "fechada").length;
+            return (
+              <button
+                key={iso}
+                onClick={() => onSelectDate(iso)}
+                className={[
+                  "min-h-[60px] md:min-h-[72px] rounded-lg border p-1.5 text-left transition flex flex-col gap-1",
+                  inMonth ? "bg-background/40" : "bg-background/10 opacity-50",
+                  isSel
+                    ? "border-primary ring-2 ring-primary/40"
+                    : today
+                      ? "border-primary/60"
+                      : "border-border hover:border-primary/40",
+                ].join(" ")}
+              >
+                <div className="flex items-center justify-between">
+                  <span
+                    className={`text-xs font-mono tabular-nums ${today ? "text-primary font-bold" : ""}`}
+                  >
+                    {format(d, "d")}
+                  </span>
+                  {items.length > 0 && (
+                    <span className="text-[10px] font-mono px-1 rounded bg-primary/20 text-primary">
+                      {items.length}
+                    </span>
+                  )}
+                </div>
+                {fechadas > 0 && (
+                  <span className="text-[10px] font-mono text-gold flex items-center gap-1">
+                    <Trophy className="size-2.5" /> {fechadas}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-2 text-[11px] text-muted-foreground">
+          Clique em um dia para ver e editar as entrevistas dele.
+        </p>
+      </div>
     </section>
   );
 }
