@@ -83,7 +83,7 @@ function AgendaEquipe() {
   };
 
   useEffect(() => {
-    if (role === "admin") reload();
+    if (role === "admin" || role === "diretor") reload();
   }, [role]);
 
   const today = todayISO();
@@ -187,7 +187,7 @@ function AgendaEquipe() {
     );
   }
 
-  if (role !== "admin") {
+  if (role !== "admin" && role !== "diretor") {
     return (
       <main className="min-h-screen max-w-3xl mx-auto px-4 py-10">
         <header className="flex flex-wrap items-center justify-between gap-3 mb-10">
