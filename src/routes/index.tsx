@@ -164,6 +164,12 @@ function Index() {
     [sellers, userId],
   );
 
+  const myInFanaticos = useMemo(
+    () => (userId ? sellers.some((s) => s.userId === userId && s.inMyTeam) : false),
+    [sellers, userId],
+  );
+  const canSeeFanaticos = isAdmin || (role === "vendedor" && myInFanaticos);
+
   const addSeller = async () => {
     const draft: Omit<Seller, "id"> = {
       name: "Novo vendedor",
@@ -282,6 +288,11 @@ function Index() {
               <Link to="/minha-programacao" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
                 Minha Programação
               </Link>
+              {myInFanaticos && (
+                <Link to="/fanaticos" className="px-3 py-2 rounded-lg bg-gold/15 border border-gold/40 text-gold text-xs font-semibold hover:bg-gold/25">
+                  Fanáticos
+                </Link>
+              )}
               <Link to="/minhas-comissoes" className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90">
                 Minhas Comissões
               </Link>
@@ -295,6 +306,11 @@ function Index() {
               <Link to="/agenda-equipe" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
                 Agenda da Equipe
               </Link>
+              {isAdmin && (
+                <Link to="/fanaticos" className="px-3 py-2 rounded-lg bg-gold/15 border border-gold/40 text-gold text-xs font-semibold hover:bg-gold/25">
+                  Fanáticos
+                </Link>
+              )}
               <Link to="/comissoes-equipe" className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90">
                 {role === "diretor" ? "Comissões da Minha Equipe" : "Comissões da Equipe"}
               </Link>
@@ -357,7 +373,7 @@ function Index() {
           <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
             <div className="flex items-center gap-3">
               <h2 className="font-display font-bold text-xl">
-                {isStaff && teamTab === "mine" ? "Minha equipe" : "Ranking completo"}
+                {isStaff && teamTab === "mine" ? "Fanáticos" : "Ranking completo"}
               </h2>
               {isStaff && (
                 <div className="inline-flex rounded-lg bg-secondary p-0.5 text-xs font-semibold">
@@ -373,7 +389,7 @@ function Index() {
                     onClick={() => setTeamTab("mine")}
                     className={`px-3 py-1.5 rounded-md transition ${teamTab === "mine" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
                   >
-                    Minha equipe
+                    Fanáticos
                   </button>
                 </div>
               )}
