@@ -98,6 +98,20 @@ function Index() {
           fetchSellers().then((d) => mounted && setSellers(d)).catch(console.error);
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "interviews" },
+        () => {
+          fetchSellers().then((d) => mounted && setSellers(d)).catch(console.error);
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "enrollments" },
+        () => {
+          fetchSellers().then((d) => mounted && setSellers(d)).catch(console.error);
+        },
+      )
       .subscribe();
 
     return () => {
