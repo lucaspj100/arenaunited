@@ -19,8 +19,9 @@ import { MyWeeklyResultsDialog } from "@/components/MyWeeklyResultsDialog";
 import { AuthBar } from "@/components/AuthBar";
 import { WeeklyCompetitions } from "@/components/WeeklyCompetitions";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { Plus, Trophy, Flame, Users, Loader2, GraduationCap, Crown, ImageUp, Pencil } from "lucide-react";
-import { useBrandLogo, uploadBrandLogo, useBrandText, saveBrandText, type BrandText } from "@/hooks/useBrandLogo";
+import { Plus, Trophy, Flame, Users, Loader2, GraduationCap, Crown, Pencil, Palette } from "lucide-react";
+import { useBrandText, saveBrandText, type BrandText } from "@/hooks/useBrandLogo";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -46,9 +47,6 @@ function Index() {
   const isAdmin = role === "admin";
   const [teamTab, setTeamTab] = useState<"all" | "mine">("all");
   const [enrollAgg, setEnrollAgg] = useState<Record<string, { monthly: number; commission: number }>>({});
-  const { logoUrl, refresh: refreshLogo } = useBrandLogo();
-  const [uploadingLogo, setUploadingLogo] = useState(false);
-  const logoInputRef = useRef<HTMLInputElement>(null);
   const { text: brandText, refresh: refreshBrandText } = useBrandText();
   const [editingBrand, setEditingBrand] = useState(false);
   const [brandDraft, setBrandDraft] = useState<BrandText>(brandText);
@@ -73,22 +71,6 @@ function Index() {
       alert("Não foi possível salvar: " + ((e as Error)?.message ?? "erro"));
     } finally {
       setSavingBrand(false);
-    }
-  };
-
-  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    setUploadingLogo(true);
-    try {
-      await uploadBrandLogo(file);
-      await refreshLogo();
-    } catch (err) {
-      console.error(err);
-      alert("Não foi possível atualizar a logo: " + ((err as Error)?.message ?? "erro"));
-    } finally {
-      setUploadingLogo(false);
     }
   };
 
