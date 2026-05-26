@@ -293,6 +293,7 @@ export function EditSellerDialog({
             </div>
           )}
 
+          {canManageFanaticos && (
           <div className="pt-2 border-t border-border">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
@@ -309,6 +310,7 @@ export function EditSellerDialog({
               </div>
             </label>
           </div>
+          )}
 
           <div className="pt-2 border-t border-border">
             <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
