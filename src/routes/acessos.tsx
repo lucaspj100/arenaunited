@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { ArrowLeft, Loader2, Mail, Plus, Trash2, CheckCircle2, Clock, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Loader2, Mail, Plus, Trash2, CheckCircle2, Clock, ShieldCheck, Save } from "lucide-react";
 
 export const Route = createFileRoute("/acessos")({
   component: AccessesPage,
@@ -17,6 +17,7 @@ type Invite = {
   app_role: "vendedor" | "diretor" | "admin";
   used_at: string | null;
   created_at: string;
+  used_by: string | null;
 };
 
 function AccessesPage() {
@@ -44,7 +45,7 @@ function AccessesPage() {
     setLoading(true);
     const { data, error } = await supabase
       .from("allowed_emails")
-      .select("id,email,name,role,app_role,used_at,created_at")
+      .select("id,email,name,role,app_role,used_at,created_at,used_by")
       .order("created_at", { ascending: false });
     if (error) setErr(error.message);
     else setItems((data ?? []) as Invite[]);
@@ -79,6 +80,37 @@ function AccessesPage() {
     const { error } = await supabase.from("allowed_emails").delete().eq("id", id);
     if (error) alert(error.message);
     else load();
+  };
+
+  const saveRoles = async (
+    inv: Invite,
+    nextAppRole: "vendedor" | "diretor" | "admin",
+    nextSellerRole: "consultor" | "gerente",
+  ) => {
+    const { error } = await supabase
+      .from("allowed_emails")
+      .update({ app_role: nextAppRole, role: nextSellerRole })
+      .eq("id", inv.id);
+    if (error) {
+      alert(error.message);
+      return;
+    }
+    if (inv.used_by) {
+      const appRole = nextAppRole;
+      await supabase.from("user_roles").delete().eq("user_id", inv.used_by);
+      const { error: rErr } = await supabase
+        .from("user_roles")
+        .insert({ user_id: inv.used_by, role: appRole });
+      if (rErr) alert(rErr.message);
+      if (appRole === "vendedor") {
+        const { error: sErr } = await supabase
+          .from("sellers")
+          .update({ role: nextSellerRole })
+          .eq("user_id", inv.used_by);
+        if (sErr) console.warn(sErr.message);
+      }
+    }
+    load();
   };
 
   return (
@@ -156,22 +188,14 @@ function AccessesPage() {
           {items.map((i) => (
             <li
               key={i.id}
-              className="flex items-center justify-between gap-3 rounded-xl bg-card border border-border px-4 py-3"
+              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl bg-card border border-border px-4 py-3"
             >
               <div className="min-w-0">
                 <div className="text-sm font-semibold truncate">{i.name}</div>
                 <div className="text-xs text-muted-foreground font-mono truncate">{i.email}</div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                {i.app_role === "diretor" ? (
-                  <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-1 rounded bg-primary/15 text-primary font-mono">
-                    <ShieldCheck className="size-3" /> Diretor
-                  </span>
-                ) : (
-                  <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded bg-secondary font-mono">
-                    {i.role}
-                  </span>
-                )}
+                <RoleEditor invite={i} onSave={saveRoles} />
                 {i.used_at ? (
                   <span className="flex items-center gap-1 text-[10px] text-primary font-mono">
                     <CheckCircle2 className="size-3" /> Usado
@@ -194,5 +218,63 @@ function AccessesPage() {
         </ul>
       )}
     </main>
+  );
+}
+
+function RoleEditor({
+  invite,
+  onSave,
+}: {
+  invite: Invite;
+  onSave: (
+    inv: Invite,
+    appRole: "vendedor" | "diretor" | "admin",
+    sellerRole: "consultor" | "gerente",
+  ) => Promise<void>;
+}) {
+  const [appRole, setAppRole] = useState<"vendedor" | "diretor" | "admin">(invite.app_role);
+  const [sellerRole, setSellerRole] = useState<"consultor" | "gerente">(invite.role);
+  const [saving, setSaving] = useState(false);
+  const dirty = appRole !== invite.app_role || sellerRole !== invite.role;
+  return (
+    <div className="flex items-center gap-1.5">
+      <select
+        value={appRole}
+        onChange={(e) => setAppRole(e.target.value as typeof appRole)}
+        className="rounded-md bg-input border border-border px-2 py-1 text-[11px] outline-none focus:border-primary font-mono uppercase"
+        title="Acesso"
+      >
+        <option value="vendedor">Vendedor</option>
+        <option value="diretor">Diretor</option>
+        <option value="admin">Admin</option>
+      </select>
+      <select
+        value={sellerRole}
+        onChange={(e) => setSellerRole(e.target.value as typeof sellerRole)}
+        disabled={appRole !== "vendedor"}
+        className="rounded-md bg-input border border-border px-2 py-1 text-[11px] outline-none focus:border-primary font-mono uppercase disabled:opacity-40"
+        title="Cargo de venda"
+      >
+        <option value="consultor">Consultor</option>
+        <option value="gerente">Gerente</option>
+      </select>
+      {dirty && (
+        <button
+          disabled={saving}
+          onClick={async () => {
+            setSaving(true);
+            await onSave(invite, appRole, sellerRole);
+            setSaving(false);
+          }}
+          className="size-7 rounded-md bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 disabled:opacity-60"
+          title="Salvar"
+        >
+          {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
+        </button>
+      )}
+      {!dirty && invite.app_role === "diretor" && (
+        <ShieldCheck className="size-3.5 text-primary" />
+      )}
+    </div>
   );
 }
