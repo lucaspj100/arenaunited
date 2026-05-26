@@ -55,7 +55,7 @@ export function useCurrentUser(): CurrentUser {
             ? "presidente"
             : roles.includes("diretor")
               ? "diretor"
-              : roles.includes("vendedor")
+              : roles.includes("vendedor") || roles.includes("franqueado")
                 ? "vendedor"
                 : null;
       if (mounted)
