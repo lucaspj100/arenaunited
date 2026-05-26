@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       allowed_emails: {
         Row: {
+          app_role: Database["public"]["Enums"]["app_role"]
           created_at: string
           email: string
           id: string
@@ -25,6 +26,7 @@ export type Database = {
           used_by: string | null
         }
         Insert: {
+          app_role?: Database["public"]["Enums"]["app_role"]
           created_at?: string
           email: string
           id?: string
@@ -34,6 +36,7 @@ export type Database = {
           used_by?: string | null
         }
         Update: {
+          app_role?: Database["public"]["Enums"]["app_role"]
           created_at?: string
           email?: string
           id?: string
