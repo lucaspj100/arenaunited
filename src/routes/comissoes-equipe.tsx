@@ -71,7 +71,7 @@ function ComissoesEquipe() {
   const range = useMemo(() => getPeriodRange(period), [period]);
 
   const isAdmin = role === "admin";
-  const isDirector = role === "diretor";
+  const isDirector = role === "diretor" || role === "ceo" || role === "presidente";
 
   const pendingCount = useMemo(
     () => enrollments.filter((e) => e.status === "pending").length,
