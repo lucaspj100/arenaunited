@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type Role = "admin" | "diretor" | "vendedor" | null;
+export type Role = "admin" | "diretor" | "ceo" | "presidente" | "vendedor" | null;
 
 export type CurrentUser = {
   loading: boolean;
@@ -39,18 +39,26 @@ export function useCurrentUser(): CurrentUser {
       const roles = (rolesRes.data ?? []).map((r) => r.role);
       const role: Role = roles.includes("admin")
         ? "admin"
-        : roles.includes("diretor")
-          ? "diretor"
-          : roles.includes("vendedor")
-            ? "vendedor"
-            : null;
+        : roles.includes("ceo")
+          ? "ceo"
+          : roles.includes("presidente")
+            ? "presidente"
+            : roles.includes("diretor")
+              ? "diretor"
+              : roles.includes("vendedor")
+                ? "vendedor"
+                : null;
       if (mounted)
         setState({
           loading: false,
           userId: uid,
           email,
           role,
-          isStaff: role === "admin" || role === "diretor",
+          isStaff:
+            role === "admin" ||
+            role === "diretor" ||
+            role === "ceo" ||
+            role === "presidente",
           sellerId: sellerRes.data?.id ?? null,
         });
     };
