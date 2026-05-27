@@ -131,6 +131,13 @@ export type Database = {
             foreignKeyName: "enrollments_seller_id_fkey"
             columns: ["seller_id"]
             isOneToOne: false
+            referencedRelation: "latest_approved_enrollment"
+            referencedColumns: ["seller_id"]
+          },
+          {
+            foreignKeyName: "enrollments_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
             referencedRelation: "monthly_seller_stats"
             referencedColumns: ["seller_id"]
           },
@@ -188,6 +195,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "interviews_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "latest_approved_enrollment"
+            referencedColumns: ["seller_id"]
+          },
           {
             foreignKeyName: "interviews_seller_id_fkey"
             columns: ["seller_id"]
@@ -303,6 +317,24 @@ export type Database = {
       }
     }
     Views: {
+      latest_approved_enrollment: {
+        Row: {
+          approved_at: string | null
+          commission_amount: number | null
+          created_at: string | null
+          enrollment_date: string | null
+          enrollment_value: number | null
+          id: string | null
+          material_value: number | null
+          monthly_fee: number | null
+          seller_avatar: string | null
+          seller_id: string | null
+          seller_name: string | null
+          seller_role: Database["public"]["Enums"]["seller_role"] | null
+          student_name: string | null
+        }
+        Relationships: []
+      }
       monthly_seller_stats: {
         Row: {
           month_completed: number | null
@@ -320,6 +352,13 @@ export type Database = {
           seller_id: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "enrollments_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "latest_approved_enrollment"
+            referencedColumns: ["seller_id"]
+          },
           {
             foreignKeyName: "enrollments_seller_id_fkey"
             columns: ["seller_id"]
