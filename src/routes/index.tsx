@@ -18,6 +18,7 @@ import { EditSellerDialog } from "@/components/EditSellerDialog";
 import { MyWeeklyResultsDialog } from "@/components/MyWeeklyResultsDialog";
 import { AuthBar } from "@/components/AuthBar";
 import { WeeklyCompetitions } from "@/components/WeeklyCompetitions";
+import { LatestEnrollmentSpotlight } from "@/components/LatestEnrollmentSpotlight";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Plus, Trophy, Flame, Users, Loader2, GraduationCap, Crown, Pencil, Palette } from "lucide-react";
 import { useBrandText, saveBrandText, type BrandText } from "@/hooks/useBrandLogo";
@@ -350,6 +351,8 @@ function Index() {
           <Podium top3={ranked.slice(0, 3)} />
         </section>
       )}
+
+      {!loading && <LatestEnrollmentSpotlight />}
 
       {!loading && sellers.length > 0 && <WeeklyCompetitions sellers={sellers} />}
 
