@@ -66,7 +66,7 @@ const toSeller = (r: Row): Seller => ({
 });
 
 export async function fetchSellers(): Promise<Seller[]> {
-  const [sellersRes, statsRes, monthRes] = await Promise.all([
+  const [sellersRes, statsRes, monthRes, approvedRes] = await Promise.all([
     supabase
       .from("sellers")
       .select(COLS)
@@ -78,10 +78,14 @@ export async function fetchSellers(): Promise<Seller[]> {
     supabase
       .from("monthly_seller_stats")
       .select("seller_id,month_scheduled,month_completed"),
+    supabase
+      .from("seller_approved_totals")
+      .select("seller_id,approved_deals,approved_material_value"),
   ]);
   if (sellersRes.error) throw sellersRes.error;
   if (statsRes.error) console.warn("weekly_seller_stats error", statsRes.error);
   if (monthRes.error) console.warn("monthly_seller_stats error", monthRes.error);
+  if (approvedRes.error) console.warn("seller_approved_totals error", approvedRes.error);
   const statsMap = new Map<string, { s: number; c: number; e: number }>();
   for (const r of statsRes.data ?? []) {
     statsMap.set(r.seller_id as string, {
@@ -97,6 +101,13 @@ export async function fetchSellers(): Promise<Seller[]> {
       c: Number(r.month_completed) || 0,
     });
   }
+  const approvedMap = new Map<string, { d: number; m: number }>();
+  for (const r of approvedRes.data ?? []) {
+    approvedMap.set(r.seller_id as string, {
+      d: Number(r.approved_deals) || 0,
+      m: Number(r.approved_material_value) || 0,
+    });
+  }
   return (sellersRes.data as Row[]).map((r) => {
     const base = toSeller(r);
     const st = statsMap.get(base.id);
@@ -108,6 +119,14 @@ export async function fetchSellers(): Promise<Seller[]> {
     const mt = monthMap.get(base.id);
     base.monthScheduled = mt?.s ?? 0;
     base.monthCompleted = mt?.c ?? 0;
+    const ap = approvedMap.get(base.id);
+    if (ap) {
+      base.deals = ap.d;
+      base.material = ap.m;
+    } else {
+      base.deals = 0;
+      base.material = 0;
+    }
     return base;
   });
 }

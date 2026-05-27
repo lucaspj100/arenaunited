@@ -312,6 +312,37 @@ export type Database = {
         }
         Relationships: []
       }
+      seller_approved_totals: {
+        Row: {
+          approved_deals: number | null
+          approved_enrollment_value: number | null
+          approved_material_value: number | null
+          seller_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollments_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_seller_stats"
+            referencedColumns: ["seller_id"]
+          },
+          {
+            foreignKeyName: "enrollments_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollments_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_seller_stats"
+            referencedColumns: ["seller_id"]
+          },
+        ]
+      }
       weekly_seller_stats: {
         Row: {
           seller_id: string | null
