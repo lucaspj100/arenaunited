@@ -4,6 +4,7 @@ import { Enrollment } from "@/lib/enrollments";
 import { Interview } from "@/lib/interviews";
 import { ArrowDown, ArrowUp, Minus, Target, Trophy } from "lucide-react";
 import type { ReactNode } from "react";
+import type { PerformanceTier } from "@/lib/motivation";
 
 type Totals = {
   scheduled: number;
@@ -50,6 +51,8 @@ export function SellerDashboard({
   enrollmentsPrevious,
   interviewsPrevious,
   topSlot,
+  headerSlot,
+  mode,
 }: {
   seller: Seller;
   rank: number | null;
@@ -61,6 +64,8 @@ export function SellerDashboard({
   enrollmentsPrevious: Enrollment[];
   interviewsPrevious: Interview[];
   topSlot?: ReactNode;
+  headerSlot?: ReactNode;
+  mode?: PerformanceTier;
 }) {
   const t = computeTotals(enrollmentsCurrent, interviewsCurrent);
   const p = computeTotals(enrollmentsPrevious, interviewsPrevious);
@@ -68,7 +73,7 @@ export function SellerDashboard({
   const ticket = t.approvedDeals ? t.enrollmentValue / t.approvedDeals : 0;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" data-mode={mode ?? "neutral"}>
       {topSlot}
       {/* Cabeçalho */}
       <section className="flex flex-wrap items-center gap-5 rounded-2xl border border-border bg-card p-5">
@@ -85,6 +90,7 @@ export function SellerDashboard({
           </div>
           <h2 className="font-display font-black text-2xl md:text-3xl leading-tight">{seller.name}</h2>
           <div className="text-xs text-muted-foreground mt-1">{range.label} · {range.from} → {range.to}</div>
+          {headerSlot && <div className="mt-3">{headerSlot}</div>}
         </div>
         {rank && (
           <div className="rounded-xl border border-gold/30 bg-gold/10 px-4 py-3 text-center">
