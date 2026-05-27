@@ -20,6 +20,7 @@ import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AgendaEquipeRouteImport } from './routes/agenda-equipe'
 import { Route as AcessosRouteImport } from './routes/acessos'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as VendedorSellerIdRouteImport } from './routes/vendedor.$sellerId'
 
 const PerfilRoute = PerfilRouteImport.update({
   id: '/perfil',
@@ -76,6 +77,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VendedorSellerIdRoute = VendedorSellerIdRouteImport.update({
+  id: '/vendedor/$sellerId',
+  path: '/vendedor/$sellerId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/minha-programacao': typeof MinhaProgramacaoRoute
   '/minhas-comissoes': typeof MinhasComissoesRoute
   '/perfil': typeof PerfilRoute
+  '/vendedor/$sellerId': typeof VendedorSellerIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/minha-programacao': typeof MinhaProgramacaoRoute
   '/minhas-comissoes': typeof MinhasComissoesRoute
   '/perfil': typeof PerfilRoute
+  '/vendedor/$sellerId': typeof VendedorSellerIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/minha-programacao': typeof MinhaProgramacaoRoute
   '/minhas-comissoes': typeof MinhasComissoesRoute
   '/perfil': typeof PerfilRoute
+  '/vendedor/$sellerId': typeof VendedorSellerIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -131,6 +140,7 @@ export interface FileRouteTypes {
     | '/minha-programacao'
     | '/minhas-comissoes'
     | '/perfil'
+    | '/vendedor/$sellerId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
     | '/minha-programacao'
     | '/minhas-comissoes'
     | '/perfil'
+    | '/vendedor/$sellerId'
   id:
     | '__root__'
     | '/'
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '/minha-programacao'
     | '/minhas-comissoes'
     | '/perfil'
+    | '/vendedor/$sellerId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -171,6 +183,7 @@ export interface RootRouteChildren {
   MinhaProgramacaoRoute: typeof MinhaProgramacaoRoute
   MinhasComissoesRoute: typeof MinhasComissoesRoute
   PerfilRoute: typeof PerfilRoute
+  VendedorSellerIdRoute: typeof VendedorSellerIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -252,6 +265,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vendedor/$sellerId': {
+      id: '/vendedor/$sellerId'
+      path: '/vendedor/$sellerId'
+      fullPath: '/vendedor/$sellerId'
+      preLoaderRoute: typeof VendedorSellerIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -267,6 +287,7 @@ const rootRouteChildren: RootRouteChildren = {
   MinhaProgramacaoRoute: MinhaProgramacaoRoute,
   MinhasComissoesRoute: MinhasComissoesRoute,
   PerfilRoute: PerfilRoute,
+  VendedorSellerIdRoute: VendedorSellerIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
