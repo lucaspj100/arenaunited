@@ -352,7 +352,7 @@ function Index() {
         </section>
       )}
 
-      {!loading && <LatestEnrollmentSpotlight />}
+      {!loading && <LatestEnrollmentSpotlight sellers={sellers} weights={config.weights} />}
 
       {!loading && sellers.length > 0 && <WeeklyCompetitions sellers={sellers} />}
 
