@@ -1,87 +1,39 @@
-## Dashboard individual + frase de motivação estoica
+## Home personalizada para vendedor
 
-### Parte 1 — Dashboard individual do vendedor
+Quando um vendedor logado abre `/`, ele vê o próprio dashboard pessoal (com frase motivacional no topo) em vez do ranking. Staff e usuários não-vendedores continuam vendo o ranking exatamente como hoje.
 
-Nova página em `/vendedor/$sellerId` mostrando métricas do vendedor com seletor livre de período. Acessível para staff (admin/diretor/ceo/presidente) ou para o próprio vendedor; outros vendedores recebem "Acesso negado".
+### Comportamento por tipo de usuário em `/`
 
-**Acesso e navegação**
-- Rota nova: `src/routes/vendedor.$sellerId.tsx`.
-- Permissão: `isStaff` OU `seller.user_id === currentUserId`.
-- Entrada: nome do vendedor no `SellerRow` vira `<Link>` para a página (com `preload="intent"`); ícone editar continua como hoje para staff.
-- Botão "Voltar" no header.
+- **Vendedor (não staff, com `sellerId` vinculado):** vê o conteúdo de `/vendedor/$sellerId` direto na home (mesma rota `/`, sem redirect — preserva URL e bookmark).
+- **Staff (admin/diretor/ceo/presidente):** vê o ranking atual, sem mudanças.
+- **Não logado / usuário sem vínculo de vendedor:** vê o ranking atual (igual hoje).
 
-**Seletor de período (livre)**
-- Presets: Hoje, Esta semana, Mês atual, Mês anterior, Personalizado (data inicial + final).
-- Default: mês atual.
+### Frase motivacional
 
-**Métricas exibidas (refletem o período escolhido)**
-- Cabeçalho: avatar, nome, cargo, posição no ranking geral.
-- Cards principais: entrevistas marcadas, entrevistas realizadas, taxa de conversão (matrículas/realizadas), matrículas aprovadas, material vendido (R$), mensalidades (R$), comissão prevista (R$), ticket médio.
-- Comparação com período anterior de mesma duração: variação % e absoluta para matrículas, material e comissão.
-- Meta do mês (só quando período = mês atual): barras de progresso para `goal_deals` e `goal_material` + "falta X para bater a meta".
+- Sai da home (`<MotivationCard>` é removido de `src/routes/index.tsx`).
+- Passa a aparecer no topo do dashboard pessoal (dentro de `SellerDashboard`, acima do cabeçalho do vendedor), tanto na home do vendedor quanto na rota `/vendedor/$sellerId`.
+- Mesma lógica de tier (top / rising / struggling / neutral) e seleção determinística por dia.
 
-**Como os dados são buscados** (client-side via `supabase-js`; RLS já cobre):
-1. `sellers` por id.
-2. `interviews` filtradas por `seller_id` e intervalo de `scheduled_date`.
-3. `enrollments` aprovadas filtradas por `seller_id` e intervalo de `enrollment_date`.
-4. Posição no ranking reaproveita `fetchSellers()` + `rankSellers()` existentes.
+### Acesso ao ranking para vendedor
 
-**Realtime:** assina `enrollments` e `interviews` filtrando por `seller_id`, recarregando ao detectar evento.
-
-### Parte 2 — Frase de motivação estoica na página inicial
-
-Card discreto no topo da home (apenas para usuários logados como vendedor; staff não vê). A frase é escolhida automaticamente conforme a performance do vendedor no mês atual.
-
-**Classificação de performance** (calculada no cliente a partir de `sellers` + posição já calculada por `rankSellers`):
-- **top**: vendedor está no top 3 do ranking OU já bateu ≥100% da meta de matrículas.
-- **rising**: posição entre 4º e metade superior do ranking E entre 50% e 99% da meta.
-- **struggling**: metade inferior do ranking OU <30% da meta passada a primeira semana do mês.
-- **neutral**: nenhum dos anteriores.
-
-**Pools de frases estoicas** (curadas, Marco Aurélio / Sêneca / Epicteto), com leve adaptação ao contexto de vendas. Exemplos:
-
-- **top** — "não abandonar o processo":
-  - "Não é porque as coisas são difíceis que não ousamos; é porque não ousamos que elas são difíceis." — Sêneca
-  - "Tu tens poder sobre a tua mente, não sobre os acontecimentos. Compreende isso, e encontrarás força." — Marco Aurélio
-  - "O sucesso de ontem não te pertence mais. O que importa é o que farás hoje." — adaptado, Marco Aurélio
-
-- **rising** — manter o ritmo:
-  - "Pequenas coisas, feitas de modo constante, levam a grandes resultados."
-  - "Não diga que vai fazer. Faça." — Epicteto
-  - "Cada hábito e faculdade se forma e se fortalece pelo ato correspondente." — Epicteto
-
-- **struggling** — dificuldade/crise:
-  - "Sofremos mais na imaginação do que na realidade." — Sêneca
-  - "O obstáculo é o caminho." — Marco Aurélio
-  - "Não são as coisas que perturbam os homens, mas a opinião que têm das coisas." — Epicteto
-  - "Comece. O resto vem com o trabalho."
-
-- **neutral** — disciplina diária:
-  - "Toda nova manhã é uma nova chance de fazer melhor."
-  - "Não desperdices o que resta da tua vida em opiniões alheias." — Marco Aurélio
-
-A frase é determinística para o dia: `hash(sellerId + YYYY-MM-DD) % pool.length`, então um vendedor vê a mesma frase o dia inteiro mas troca todo dia.
-
-**UI:**
-- Card no topo da home (acima do ranking), com ícone discreto, frase em destaque e autor abaixo.
-- Aparece somente quando o usuário logado tem `sellerId` vinculado.
-- Em performance "struggling" o card ganha leve toque visual de acolhimento (borda mais suave, sem cor de alerta).
-- Em performance "top" o card ganha leve toque dourado/bronze.
+- Adicionar link **"Ranking"** na navegação (provavelmente no `AuthBar` ou header global) apontando para uma nova rota `/ranking`.
+- Criar `src/routes/ranking.tsx` que renderiza o mesmo conteúdo do ranking atual (extraído de `index.tsx` para um componente reutilizável `<RankingView />`).
+- Para staff, o link "Ranking" também aparece, mas é redundante com a home — tudo bem.
 
 ### Arquivos
 
-- **Criar** `src/routes/vendedor.$sellerId.tsx` — dashboard individual.
-- **Criar** `src/lib/period.ts` — `periodPresets`, `getRange`, `previousRange`.
-- **Criar** `src/components/PeriodPicker.tsx` — dropdown de presets + inputs de data.
-- **Criar** `src/components/SellerDashboard.tsx` — render dos cards/barras.
-- **Criar** `src/lib/motivation.ts` — pools de frases + função `pickQuote(sellerId, tier, date)`.
-- **Criar** `src/components/MotivationCard.tsx` — card da home.
-- **Editar** `src/components/SellerRow.tsx` — nome vira `<Link>` para `/vendedor/$sellerId`.
-- **Editar** `src/routes/index.tsx` — montar `<MotivationCard>` no topo quando `sellerId` existe.
+- **Criar** `src/components/RankingView.tsx` — extrai o JSX do ranking atual de `routes/index.tsx` para reuso.
+- **Criar** `src/routes/ranking.tsx` — rota dedicada que renderiza `<RankingView />`.
+- **Criar** `src/components/SellerHomeView.tsx` (ou reaproveitar a página `vendedor.$sellerId.tsx` extraindo o miolo) — wrapper que carrega dados do vendedor logado e renderiza `SellerDashboard` com `MotivationCard` no topo.
+- **Editar** `src/routes/index.tsx` — passa a decidir: se `currentUser` tem `sellerId` e NÃO é staff → renderiza `<SellerHomeView sellerId={...} />`; caso contrário → renderiza `<RankingView />`. Remove o `<MotivationCard>` daqui.
+- **Editar** `src/components/SellerDashboard.tsx` — aceita uma prop opcional `topSlot?: ReactNode` (ou monta o `MotivationCard` direto quando recebe `showMotivation`) para renderizar a frase acima do cabeçalho.
+- **Editar** `src/routes/vendedor.$sellerId.tsx` — passa `showMotivation` quando o usuário visualizando é o próprio dono do dashboard (não mostra para staff olhando dashboard de outro vendedor).
+- **Editar** `src/components/AuthBar.tsx` (ou onde estiver a nav principal) — adiciona `<Link to="/ranking">Ranking</Link>` visível para todos os usuários logados.
 
 ### Detalhes técnicos
 
-- Nenhuma alteração no banco / nenhuma nova RLS / nenhuma nova view.
-- Tier de performance e frase calculados 100% no cliente a partir dos dados já carregados.
-- Loading skeleton enquanto carrega; `errorComponent`/`notFoundComponent` na rota nova.
-- `head()` dinâmico com "Dashboard de {nome} — Arena United".
+- Sem mudanças de banco, RLS ou tipos.
+- `useCurrentUser()` já expõe `sellerId` e `isStaff` (usado em outras telas), então a decisão na home é síncrona após `loading=false`.
+- Loading: enquanto `useCurrentUser` resolve, mostrar skeleton genérico para evitar flash de ranking para vendedores.
+- `head()` da home pode permanecer estática ("Arena United — Ranking"); opcional ajustar para "Meu dashboard" quando for vendedor (não essencial).
+- A frase motivacional só aparece para o próprio vendedor olhando o próprio dashboard; staff vendo dashboard de terceiro não vê a frase (evita ruído).
