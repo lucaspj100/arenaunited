@@ -1,0 +1,1 @@
+ALTER VIEW public.seller_approved_totals SET (security_invoker = off);
