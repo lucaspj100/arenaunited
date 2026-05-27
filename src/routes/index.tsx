@@ -19,6 +19,7 @@ import { MyWeeklyResultsDialog } from "@/components/MyWeeklyResultsDialog";
 import { AuthBar } from "@/components/AuthBar";
 import { WeeklyCompetitions } from "@/components/WeeklyCompetitions";
 import { LatestEnrollmentSpotlight } from "@/components/LatestEnrollmentSpotlight";
+import { MotivationCard } from "@/components/MotivationCard";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Plus, Trophy, Flame, Users, Loader2, GraduationCap, Crown, Pencil, Palette } from "lucide-react";
 import { useBrandText, saveBrandText, type BrandText } from "@/hooks/useBrandLogo";
@@ -353,6 +354,10 @@ function Index() {
       )}
 
       {!loading && <LatestEnrollmentSpotlight sellers={sellers} weights={config.weights} />}
+
+      {!loading && role === "vendedor" && mySellerId && (
+        <MotivationCard sellerId={mySellerId} rankedSellers={ranked} />
+      )}
 
       {!loading && sellers.length > 0 && <WeeklyCompetitions sellers={sellers} />}
 

@@ -103,3 +103,15 @@ export function getPeriodRange(key: PeriodKey, custom?: { from: string; to: stri
     label: "Personalizado",
   };
 }
+
+// Período imediatamente anterior, com mesma duração em dias
+export function getPreviousRange(range: PeriodRange): PeriodRange {
+  const from = new Date(range.from + "T00:00:00");
+  const to = new Date(range.to + "T00:00:00");
+  const days = Math.round((to.getTime() - from.getTime()) / 86400000) + 1;
+  const prevTo = new Date(from);
+  prevTo.setDate(prevTo.getDate() - 1);
+  const prevFrom = new Date(prevTo);
+  prevFrom.setDate(prevFrom.getDate() - (days - 1));
+  return { from: iso(prevFrom), to: iso(prevTo), label: "Período anterior" };
+}

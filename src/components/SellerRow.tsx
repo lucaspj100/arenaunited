@@ -1,5 +1,6 @@
 import { Seller, formatBRL } from "@/lib/ranking";
 import { Trash2, TrendingUp, Pencil, Crown } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 function initials(name: string) {
   return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
@@ -57,13 +58,24 @@ export function SellerRow({
           )}
         </div>
         {readOnly ? (
-          <span className="font-semibold truncate min-w-0 text-sm">{seller.name}</span>
+          <Link
+            to="/vendedor/$sellerId"
+            params={{ sellerId: seller.id }}
+            preload="intent"
+            className="font-semibold truncate min-w-0 text-sm hover:text-primary transition-colors"
+          >
+            {seller.name}
+          </Link>
         ) : (
-          <input
-            value={seller.name}
-            onChange={(e) => onChange({ name: e.target.value })}
-            className="bg-transparent font-semibold truncate text-sm outline-none focus:bg-input rounded px-1 -mx-1 min-w-0 w-full"
-          />
+          <Link
+            to="/vendedor/$sellerId"
+            params={{ sellerId: seller.id }}
+            preload="intent"
+            className="font-semibold truncate min-w-0 text-sm hover:text-primary transition-colors"
+            title="Ver dashboard"
+          >
+            {seller.name}
+          </Link>
         )}
       </div>
 

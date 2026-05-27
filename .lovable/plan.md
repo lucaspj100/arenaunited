@@ -1,79 +1,87 @@
-## Módulo "Comissões e Premiações"
+## Dashboard individual + frase de motivação estoica
 
-Vou adicionar um novo módulo ao sistema para cadastro de matrículas fechadas, com cálculo automático de comissão (sobre matrícula) e premiação mensal (sobre material acumulado), além de gestão de cargos pelo admin.
+### Parte 1 — Dashboard individual do vendedor
 
-### 1. Banco de dados (migration)
+Nova página em `/vendedor/$sellerId` mostrando métricas do vendedor com seletor livre de período. Acessível para staff (admin/diretor/ceo/presidente) ou para o próprio vendedor; outros vendedores recebem "Acesso negado".
 
-**Nova tabela `enrollments` (matrículas fechadas):**
-- `seller_id`, `student_name`, `enrollment_date`
-- `enrollment_value` (matrícula), `monthly_fee` (mensalidade — só indicador), `material_value`
-- `role_snapshot` (cargo no momento do cadastro: `consultor` | `gerente`)
-- `commission_rate`, `commission_amount` (calculados via trigger no insert/update)
-- `notes`, timestamps
+**Acesso e navegação**
+- Rota nova: `src/routes/vendedor.$sellerId.tsx`.
+- Permissão: `isStaff` OU `seller.user_id === currentUserId`.
+- Entrada: nome do vendedor no `SellerRow` vira `<Link>` para a página (com `preload="intent"`); ícone editar continua como hoje para staff.
+- Botão "Voltar" no header.
 
-**Novo enum `seller_role`:** `consultor`, `gerente`.
+**Seletor de período (livre)**
+- Presets: Hoje, Esta semana, Mês atual, Mês anterior, Personalizado (data inicial + final).
+- Default: mês atual.
 
-**Coluna `role` em `sellers`** (default `consultor`) — editável só por admin via política RLS + trigger `enforce_seller_update_scope` (já existe, vou estender pra bloquear `role` para não-admins).
+**Métricas exibidas (refletem o período escolhido)**
+- Cabeçalho: avatar, nome, cargo, posição no ranking geral.
+- Cards principais: entrevistas marcadas, entrevistas realizadas, taxa de conversão (matrículas/realizadas), matrículas aprovadas, material vendido (R$), mensalidades (R$), comissão prevista (R$), ticket médio.
+- Comparação com período anterior de mesma duração: variação % e absoluta para matrículas, material e comissão.
+- Meta do mês (só quando período = mês atual): barras de progresso para `goal_deals` e `goal_material` + "falta X para bater a meta".
 
-**Trigger `enrollments_calc`**: ao inserir/atualizar, lê `sellers.role` do `seller_id` e preenche `role_snapshot`, `commission_rate` (0.30/0.53), `commission_amount = enrollment_value * rate`. Vendedor não consegue sobrescrever esses campos.
+**Como os dados são buscados** (client-side via `supabase-js`; RLS já cobre):
+1. `sellers` por id.
+2. `interviews` filtradas por `seller_id` e intervalo de `scheduled_date`.
+3. `enrollments` aprovadas filtradas por `seller_id` e intervalo de `enrollment_date`.
+4. Posição no ranking reaproveita `fetchSellers()` + `rankSellers()` existentes.
 
-**RLS em `enrollments`:**
-- Admin: full CRUD
-- Vendedor: CRUD apenas onde `seller_id = current_seller_id()`
-- Validações: valores ≥ 0 via CHECK; `student_name` not null; `enrollment_date` not null
+**Realtime:** assina `enrollments` e `interviews` filtrando por `seller_id`, recarregando ao detectar evento.
 
-**Função `material_award(role, total)`** SQL stable retorna o valor da premiação conforme faixa.
+### Parte 2 — Frase de motivação estoica na página inicial
 
-### 2. Lógica de cálculo (frontend `src/lib/commissions.ts`)
+Card discreto no topo da home (apenas para usuários logados como vendedor; staff não vê). A frase é escolhida automaticamente conforme a performance do vendedor no mês atual.
 
-- `MATERIAL_TIERS` por cargo (3 faixas cada)
-- `computeMaterialAward(role, totalMaterial)` → valor + próxima faixa + quanto falta + texto de progresso
-- `monthRange(date)`, `periodPresets` (hoje, semana, mês atual, mês anterior, custom)
-- Agregadores por vendedor e por equipe
+**Classificação de performance** (calculada no cliente a partir de `sellers` + posição já calculada por `rankSellers`):
+- **top**: vendedor está no top 3 do ranking OU já bateu ≥100% da meta de matrículas.
+- **rising**: posição entre 4º e metade superior do ranking E entre 50% e 99% da meta.
+- **struggling**: metade inferior do ranking OU <30% da meta passada a primeira semana do mês.
+- **neutral**: nenhum dos anteriores.
 
-### 3. UI Vendedor — `/minhas-comissoes`
+**Pools de frases estoicas** (curadas, Marco Aurélio / Sêneca / Epicteto), com leve adaptação ao contexto de vendas. Exemplos:
 
-- Header com seletor de período
-- Cards: matrículas fechadas, total matrícula, total mensalidade (com tag "indicador"), material acumulado, **Total previsto a receber** (card destaque grande), comissão prevista, premiação prevista, ticket médio matrícula, ticket médio mensalidade, falta pra próxima premiação
-- Barra de progresso da premiação de material (textos dinâmicos conforme cargo e faixa)
-- Tabela de matrículas com ações editar/excluir
-- Modal "Nova matrícula" com campos editáveis (aluno, data, matrícula, mensalidade, material, obs). Cargo/comissão exibidos como read-only
+- **top** — "não abandonar o processo":
+  - "Não é porque as coisas são difíceis que não ousamos; é porque não ousamos que elas são difíceis." — Sêneca
+  - "Tu tens poder sobre a tua mente, não sobre os acontecimentos. Compreende isso, e encontrarás força." — Marco Aurélio
+  - "O sucesso de ontem não te pertence mais. O que importa é o que farás hoje." — adaptado, Marco Aurélio
 
-### 4. UI Admin — `/comissoes-equipe`
+- **rising** — manter o ritmo:
+  - "Pequenas coisas, feitas de modo constante, levam a grandes resultados."
+  - "Não diga que vai fazer. Faça." — Epicteto
+  - "Cada hábito e faculdade se forma e se fortalece pelo ato correspondente." — Epicteto
 
-- Filtros: período + vendedor + cargo
-- Cards gerais da equipe
-- Tabela por vendedor (todas as métricas + cargo)
-- Rankings (7 categorias) em cards visuais com pódio/lista
-- Pode criar/editar/excluir matrículas de qualquer vendedor
+- **struggling** — dificuldade/crise:
+  - "Sofremos mais na imaginação do que na realidade." — Sêneca
+  - "O obstáculo é o caminho." — Marco Aurélio
+  - "Não são as coisas que perturbam os homens, mas a opinião que têm das coisas." — Epicteto
+  - "Comece. O resto vem com o trabalho."
 
-### 5. UI Admin — Gestão de cargo
+- **neutral** — disciplina diária:
+  - "Toda nova manhã é uma nova chance de fazer melhor."
+  - "Não desperdices o que resta da tua vida em opiniões alheias." — Marco Aurélio
 
-Reaproveitar `EditSellerDialog` (ou nova área "Usuários") com select de cargo Consultor/Gerente. Salva em `sellers.role`.
+A frase é determinística para o dia: `hash(sellerId + YYYY-MM-DD) % pool.length`, então um vendedor vê a mesma frase o dia inteiro mas troca todo dia.
 
-### 6. Navegação
+**UI:**
+- Card no topo da home (acima do ranking), com ícone discreto, frase em destaque e autor abaixo.
+- Aparece somente quando o usuário logado tem `sellerId` vinculado.
+- Em performance "struggling" o card ganha leve toque visual de acolhimento (borda mais suave, sem cor de alerta).
+- Em performance "top" o card ganha leve toque dourado/bronze.
 
-- Adicionar links no `index.tsx`: vendedor vê "Minhas Comissões"; admin vê "Comissões da Equipe"
-- Rotas com `_authenticated`-style guard (client-only, igual `minha-programacao`)
+### Arquivos
+
+- **Criar** `src/routes/vendedor.$sellerId.tsx` — dashboard individual.
+- **Criar** `src/lib/period.ts` — `periodPresets`, `getRange`, `previousRange`.
+- **Criar** `src/components/PeriodPicker.tsx` — dropdown de presets + inputs de data.
+- **Criar** `src/components/SellerDashboard.tsx` — render dos cards/barras.
+- **Criar** `src/lib/motivation.ts` — pools de frases + função `pickQuote(sellerId, tier, date)`.
+- **Criar** `src/components/MotivationCard.tsx` — card da home.
+- **Editar** `src/components/SellerRow.tsx` — nome vira `<Link>` para `/vendedor/$sellerId`.
+- **Editar** `src/routes/index.tsx` — montar `<MotivationCard>` no topo quando `sellerId` existe.
 
 ### Detalhes técnicos
 
-- Valores em `numeric` no DB, formatados com `formatBRL`
-- Cálculo de premiação SEMPRE sobre acumulado do período filtrado (não por matrícula)
-- Cargo usado nos cálculos = `role_snapshot` da matrícula (mantém histórico se admin mudar cargo depois)
-- Para o dashboard, faixa de premiação usa cargo ATUAL do vendedor (perfil), pois é uma previsão do mês
-- Triggers garantem que vendedor não pode alterar `commission_rate`, `commission_amount`, `role_snapshot`, `seller_id`
-- Realtime opcional não necessário nesta fase
-
-### Arquivos a criar/editar
-
-- `supabase/migrations/...` — enum, coluna `role`, tabela `enrollments`, RLS, triggers
-- `src/lib/commissions.ts` — regras + agregadores
-- `src/lib/enrollments.ts` — CRUD
-- `src/components/EnrollmentFormDialog.tsx`
-- `src/components/MaterialProgressBar.tsx`
-- `src/components/CommissionCards.tsx`
-- `src/routes/minhas-comissoes.tsx`
-- `src/routes/comissoes-equipe.tsx`
-- `src/components/EditSellerDialog.tsx` — adicionar select de cargo
-- `src/routes/index.tsx` — links de navegação
+- Nenhuma alteração no banco / nenhuma nova RLS / nenhuma nova view.
+- Tier de performance e frase calculados 100% no cliente a partir dos dados já carregados.
+- Loading skeleton enquanto carrega; `errorComponent`/`notFoundComponent` na rota nova.
+- `head()` dinâmico com "Dashboard de {nome} — Arena United".
