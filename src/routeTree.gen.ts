@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RankingRouteImport } from './routes/ranking'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as MinhasComissoesRouteImport } from './routes/minhas-comissoes'
 import { Route as MinhaProgramacaoRouteImport } from './routes/minha-programacao'
@@ -22,6 +23,11 @@ import { Route as AcessosRouteImport } from './routes/acessos'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VendedorSellerIdRouteImport } from './routes/vendedor.$sellerId'
 
+const RankingRoute = RankingRouteImport.update({
+  id: '/ranking',
+  path: '/ranking',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PerfilRoute = PerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/minha-programacao': typeof MinhaProgramacaoRoute
   '/minhas-comissoes': typeof MinhasComissoesRoute
   '/perfil': typeof PerfilRoute
+  '/ranking': typeof RankingRoute
   '/vendedor/$sellerId': typeof VendedorSellerIdRoute
 }
 export interface FileRoutesByTo {
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/minha-programacao': typeof MinhaProgramacaoRoute
   '/minhas-comissoes': typeof MinhasComissoesRoute
   '/perfil': typeof PerfilRoute
+  '/ranking': typeof RankingRoute
   '/vendedor/$sellerId': typeof VendedorSellerIdRoute
 }
 export interface FileRoutesById {
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/minha-programacao': typeof MinhaProgramacaoRoute
   '/minhas-comissoes': typeof MinhasComissoesRoute
   '/perfil': typeof PerfilRoute
+  '/ranking': typeof RankingRoute
   '/vendedor/$sellerId': typeof VendedorSellerIdRoute
 }
 export interface FileRouteTypes {
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/minha-programacao'
     | '/minhas-comissoes'
     | '/perfil'
+    | '/ranking'
     | '/vendedor/$sellerId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/minha-programacao'
     | '/minhas-comissoes'
     | '/perfil'
+    | '/ranking'
     | '/vendedor/$sellerId'
   id:
     | '__root__'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/minha-programacao'
     | '/minhas-comissoes'
     | '/perfil'
+    | '/ranking'
     | '/vendedor/$sellerId'
   fileRoutesById: FileRoutesById
 }
@@ -183,11 +195,19 @@ export interface RootRouteChildren {
   MinhaProgramacaoRoute: typeof MinhaProgramacaoRoute
   MinhasComissoesRoute: typeof MinhasComissoesRoute
   PerfilRoute: typeof PerfilRoute
+  RankingRoute: typeof RankingRoute
   VendedorSellerIdRoute: typeof VendedorSellerIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/ranking': {
+      id: '/ranking'
+      path: '/ranking'
+      fullPath: '/ranking'
+      preLoaderRoute: typeof RankingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/perfil': {
       id: '/perfil'
       path: '/perfil'
@@ -287,6 +307,7 @@ const rootRouteChildren: RootRouteChildren = {
   MinhaProgramacaoRoute: MinhaProgramacaoRoute,
   MinhasComissoesRoute: MinhasComissoesRoute,
   PerfilRoute: PerfilRoute,
+  RankingRoute: RankingRoute,
   VendedorSellerIdRoute: VendedorSellerIdRoute,
 }
 export const routeTree = rootRouteImport
