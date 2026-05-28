@@ -9,7 +9,8 @@ import {
   loadLocalConfig,
   saveLocalConfig,
 } from "@/lib/storage";
-import { fetchEnrollments } from "@/lib/enrollments";
+import { fetchEnrollments, createEnrollment } from "@/lib/enrollments";
+import { EnrollmentFormDialog } from "@/components/EnrollmentFormDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { Podium } from "@/components/Podium";
 import { SellerRow } from "@/components/SellerRow";
@@ -36,6 +37,7 @@ export function RankingView() {
   const [teamTab, setTeamTab] = useState<"all" | "mine">("all");
   const [enrollAgg, setEnrollAgg] = useState<Record<string, { monthly: number; commission: number }>>({});
   const [claiming, setClaiming] = useState(false);
+  const [enrollSellerId, setEnrollSellerId] = useState<string | null>(null);
   const { text: brandText, refresh: refreshBrandText } = useBrandText();
   const [editingBrand, setEditingBrand] = useState(false);
   const [brandDraft, setBrandDraft] = useState<BrandText>(brandText);
@@ -431,6 +433,7 @@ export function RankingView() {
                   onChange={(patch) => updateSeller(s.id, patch)}
                   onDelete={() => deleteSeller(s.id)}
                   onEdit={() => (isStaff ? setEditingId(s.id) : setEditingMyId(s.id))}
+                  onAddEnrollment={isStaff ? () => setEnrollSellerId(s.id) : undefined}
                   readOnly={!isStaff}
                   showEditButton={isStaff || isMine}
                   editLabel={isMine && !isStaff ? "Editar meus resultados" : undefined}
