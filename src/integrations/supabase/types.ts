@@ -157,6 +157,57 @@ export type Database = {
           },
         ]
       }
+      financial_settings: {
+        Row: {
+          average_lifetime_months: number
+          cancellation_rate: number
+          contract_duration_months: number
+          created_at: string
+          default_enrollment_fee_type: string
+          default_enrollment_fee_value: number
+          default_school_retention_percentage: number
+          general_automation_cost: number
+          general_tools_cost: number
+          id: string
+          other_commercial_costs: number
+          paid_traffic_cost: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          average_lifetime_months?: number
+          cancellation_rate?: number
+          contract_duration_months?: number
+          created_at?: string
+          default_enrollment_fee_type?: string
+          default_enrollment_fee_value?: number
+          default_school_retention_percentage?: number
+          general_automation_cost?: number
+          general_tools_cost?: number
+          id?: string
+          other_commercial_costs?: number
+          paid_traffic_cost?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          average_lifetime_months?: number
+          cancellation_rate?: number
+          contract_duration_months?: number
+          created_at?: string
+          default_enrollment_fee_type?: string
+          default_enrollment_fee_value?: number
+          default_school_retention_percentage?: number
+          general_automation_cost?: number
+          general_tools_cost?: number
+          id?: string
+          other_commercial_costs?: number
+          paid_traffic_cost?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       interviews: {
         Row: {
           created_at: string
@@ -220,6 +271,71 @@ export type Database = {
             foreignKeyName: "interviews_seller_id_fkey"
             columns: ["seller_id"]
             isOneToOne: false
+            referencedRelation: "weekly_seller_stats"
+            referencedColumns: ["seller_id"]
+          },
+        ]
+      }
+      seller_financial_settings: {
+        Row: {
+          active_for_financial_analysis: boolean
+          created_at: string
+          financial_notes: string | null
+          id: string
+          monthly_automation_cost: number
+          monthly_tools_cost: number
+          seller_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active_for_financial_analysis?: boolean
+          created_at?: string
+          financial_notes?: string | null
+          id?: string
+          monthly_automation_cost?: number
+          monthly_tools_cost?: number
+          seller_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active_for_financial_analysis?: boolean
+          created_at?: string
+          financial_notes?: string | null
+          id?: string
+          monthly_automation_cost?: number
+          monthly_tools_cost?: number
+          seller_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_financial_settings_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: true
+            referencedRelation: "latest_approved_enrollment"
+            referencedColumns: ["seller_id"]
+          },
+          {
+            foreignKeyName: "seller_financial_settings_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: true
+            referencedRelation: "monthly_seller_stats"
+            referencedColumns: ["seller_id"]
+          },
+          {
+            foreignKeyName: "seller_financial_settings_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: true
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_financial_settings_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: true
             referencedRelation: "weekly_seller_stats"
             referencedColumns: ["seller_id"]
           },
@@ -293,6 +409,68 @@ export type Database = {
           week_scheduled?: number
         }
         Relationships: []
+      }
+      team_seller_links: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          manager_user_id: string
+          seller_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          manager_user_id: string
+          seller_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          manager_user_id?: string
+          seller_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_seller_links_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "latest_approved_enrollment"
+            referencedColumns: ["seller_id"]
+          },
+          {
+            foreignKeyName: "team_seller_links_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_seller_stats"
+            referencedColumns: ["seller_id"]
+          },
+          {
+            foreignKeyName: "team_seller_links_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_seller_links_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_seller_stats"
+            referencedColumns: ["seller_id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -406,6 +584,12 @@ export type Database = {
       is_director_of: { Args: { _seller_id: string }; Returns: boolean }
       is_seller_like: { Args: { _user_id: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      is_team_manager: { Args: { _user_id: string }; Returns: boolean }
+      manages_seller: {
+        Args: { _seller_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_can_access_seller: { Args: { _seller_id: string }; Returns: boolean }
     }
     Enums: {
       app_role:

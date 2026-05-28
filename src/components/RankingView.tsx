@@ -24,6 +24,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Plus, Trophy, Flame, Users, Loader2, GraduationCap, Crown, Pencil, Palette } from "lucide-react";
 import { useBrandText, saveBrandText, type BrandText } from "@/hooks/useBrandLogo";
 import { BrandLogo } from "@/components/BrandLogo";
+import { getAccessibleSellerIds } from "@/lib/access";
 
 export function RankingView() {
   const [sellers, setSellers] = useState<Seller[]>([]);
@@ -33,11 +34,15 @@ export function RankingView() {
   const [editingMyId, setEditingMyId] = useState<string | null>(null);
   const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const { userId, email, role, isStaff, loading: authLoading } = useCurrentUser();
+  const cu = useCurrentUser();
+  const isFranchisee = cu.isFranchisee;
+  const isManager = cu.isManager;
   const isAdmin = role === "admin";
   const [teamTab, setTeamTab] = useState<"all" | "mine">("all");
   const [enrollAgg, setEnrollAgg] = useState<Record<string, { monthly: number; commission: number }>>({});
   const [claiming, setClaiming] = useState(false);
   const [enrollSellerId, setEnrollSellerId] = useState<string | null>(null);
+  const [accessibleIds, setAccessibleIds] = useState<string[] | null>(null);
   const { text: brandText, refresh: refreshBrandText } = useBrandText();
   const [editingBrand, setEditingBrand] = useState(false);
   const [brandDraft, setBrandDraft] = useState<BrandText>(brandText);
@@ -77,6 +82,9 @@ export function RankingView() {
 
   useEffect(() => {
     let mounted = true;
+    getAccessibleSellerIds()
+      .then((ids) => mounted && setAccessibleIds(ids))
+      .catch(() => mounted && setAccessibleIds(null));
     fetchSellers()
       .then((data) => {
         if (!mounted) return;
@@ -146,8 +154,17 @@ export function RankingView() {
   );
 
   const visibleRanked = useMemo(
-    () => (isStaff && teamTab === "mine" ? ranked.filter((s) => s.inMyTeam) : ranked),
-    [ranked, teamTab, isStaff],
+    () => {
+      let list = ranked;
+      // Franqueado (gestor não-staff) só vê vendedores da própria equipe
+      if (!isStaff && isFranchisee && accessibleIds !== null) {
+        const allow = new Set(accessibleIds);
+        list = list.filter((s) => allow.has(s.id));
+      }
+      if (isStaff && teamTab === "mine") list = list.filter((s) => s.inMyTeam);
+      return list;
+    },
+    [ranked, teamTab, isStaff, isFranchisee, accessibleIds],
   );
 
   const totalMaterial = sellers.reduce((a, s) => a + s.material, 0);
@@ -298,6 +315,12 @@ export function RankingView() {
               <Link to="/agenda-equipe" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
                 Agenda da Equipe
               </Link>
+              <Link to="/equipe" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
+                Equipes
+              </Link>
+              <Link to="/financeiro" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
+                Financeiro
+              </Link>
               {isAdmin && (
                 <Link to="/marca" className="flex items-center gap-1 px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
                   <Palette className="size-3.5" /> Marca
@@ -310,6 +333,16 @@ export function RankingView() {
               )}
               <Link to="/comissoes-equipe" className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90">
                 {role === "admin" ? "Comissões da Equipe" : "Comissões da Minha Equipe"}
+              </Link>
+            </>
+          )}
+          {!isStaff && isManager && (
+            <>
+              <Link to="/equipe" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
+                Minha Equipe
+              </Link>
+              <Link to="/financeiro" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
+                Financeiro
               </Link>
             </>
           )}
