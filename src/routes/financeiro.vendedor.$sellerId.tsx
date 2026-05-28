@@ -7,6 +7,8 @@ import { fetchEnrollments } from "@/lib/enrollments";
 import {
   fetchFinancialSettings,
   fetchSellerFinancialSettings,
+  fetchTeamFinancialSettings,
+  mergeWithTeam,
   type FinancialSettings,
   type SellerFinancialSettings,
 } from "@/lib/financialSettings";
@@ -14,6 +16,7 @@ import { computeScopeKpis } from "@/lib/financial";
 import { supabase } from "@/integrations/supabase/client";
 import { KpiCard } from "@/components/financial/KpiCard";
 import type { SellerRole } from "@/lib/commissions";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export const Route = createFileRoute("/financeiro/vendedor/$sellerId")({
   component: VendedorFinPage,
@@ -23,6 +26,8 @@ type SellerLite = { id: string; name: string; role: SellerRole };
 
 function VendedorFinPage() {
   const { sellerId } = Route.useParams();
+  const { isStaff, isManager, userId, sellerId: mySellerId } = useCurrentUser();
+  const isOwnView = !!mySellerId && mySellerId === sellerId && !isStaff && !isManager;
   const [periodKey, setPeriodKey] = useState<PeriodKey>("month");
   const [custom, setCustom] = useState(() => {
     const r = getPeriodRange("month");
@@ -40,15 +45,18 @@ function VendedorFinPage() {
     let mounted = true;
     setLoading(true);
     (async () => {
-      const [sRes, s, c, rows] = await Promise.all([
+      const [sRes, globalS, team, c, rows] = await Promise.all([
         supabase.from("sellers").select("id,name,role").eq("id", sellerId).maybeSingle(),
         fetchFinancialSettings(),
+        userId && isManager && !isStaff
+          ? fetchTeamFinancialSettings(userId)
+          : Promise.resolve(null),
         fetchSellerFinancialSettings([sellerId]),
         fetchEnrollments({ sellerId, from: range.from, to: range.to, status: "approved" }),
       ]);
       if (!mounted) return;
       setSeller((sRes.data as SellerLite) ?? null);
-      setSettings(s);
+      setSettings(mergeWithTeam(globalS, team));
       setCosts(c);
       setEnrollments(rows);
       setLoading(false);
@@ -56,7 +64,7 @@ function VendedorFinPage() {
     return () => {
       mounted = false;
     };
-  }, [sellerId, range.from, range.to]);
+  }, [sellerId, range.from, range.to, userId, isManager, isStaff]);
 
   const kpis = useMemo(() => {
     if (!settings) return null;
@@ -106,14 +114,28 @@ function VendedorFinPage() {
         <KpiCard label="Receita líquida" value={kpis.netEnrollmentRevenue} tone="success" />
         <KpiCard label="LTV ajustado" value={kpis.totalLTVAdjusted} />
         <KpiCard label="Receita esperada" value={kpis.totalExpectedRevenue} tone="primary" />
-        <KpiCard label="Custos individuais" value={kpis.individualCostsTotal} tone="warning" />
-        <KpiCard
-          label="ROI"
-          value={kpis.roi}
-          format="ratio"
-          tone={kpis.roi === null ? "default" : kpis.roi >= 2 ? "success" : kpis.roi >= 1 ? "warning" : "danger"}
-          hint={kpis.roi === null ? "Sem custo informado" : undefined}
-        />
+        {!isOwnView && (
+          <>
+            <KpiCard label="Salário" value={kpis.salariesTotal} tone="warning" hint="Salário mensal do vendedor." />
+            <KpiCard label="Custo individual total" value={kpis.individualCostsTotal} tone="warning" hint="Salário + ferramentas + outros." />
+            {kpis.totalInvestment > 0 ? (
+              <>
+                <KpiCard label="CAC" value={kpis.cac} tone="primary" hint="Custo individual ÷ matrículas." />
+                <KpiCard
+                  label="ROI"
+                  value={kpis.roi}
+                  format="ratio"
+                  tone={kpis.roi === null ? "default" : kpis.roi >= 2 ? "success" : kpis.roi >= 1 ? "warning" : "danger"}
+                  hint="Receita esperada ÷ custo individual."
+                />
+              </>
+            ) : (
+              <div className="col-span-2 rounded-xl border border-amber-500/40 bg-amber-500/5 px-4 py-3 text-sm">
+                Cadastre salários e custos para calcular CAC e ROI.
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
