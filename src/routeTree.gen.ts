@@ -15,7 +15,9 @@ import { Route as MinhasComissoesRouteImport } from './routes/minhas-comissoes'
 import { Route as MinhaProgramacaoRouteImport } from './routes/minha-programacao'
 import { Route as MarcaRouteImport } from './routes/marca'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as FinanceiroRouteImport } from './routes/financeiro'
 import { Route as FanaticosRouteImport } from './routes/fanaticos'
+import { Route as EquipeRouteImport } from './routes/equipe'
 import { Route as ComissoesEquipeRouteImport } from './routes/comissoes-equipe'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AgendaEquipeRouteImport } from './routes/agenda-equipe'
@@ -53,9 +55,19 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FinanceiroRoute = FinanceiroRouteImport.update({
+  id: '/financeiro',
+  path: '/financeiro',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FanaticosRoute = FanaticosRouteImport.update({
   id: '/fanaticos',
   path: '/fanaticos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EquipeRoute = EquipeRouteImport.update({
+  id: '/equipe',
+  path: '/equipe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ComissoesEquipeRoute = ComissoesEquipeRouteImport.update({
@@ -95,7 +107,9 @@ export interface FileRoutesByFullPath {
   '/agenda-equipe': typeof AgendaEquipeRoute
   '/cadastro': typeof CadastroRoute
   '/comissoes-equipe': typeof ComissoesEquipeRoute
+  '/equipe': typeof EquipeRoute
   '/fanaticos': typeof FanaticosRoute
+  '/financeiro': typeof FinanceiroRoute
   '/login': typeof LoginRoute
   '/marca': typeof MarcaRoute
   '/minha-programacao': typeof MinhaProgramacaoRoute
@@ -110,7 +124,9 @@ export interface FileRoutesByTo {
   '/agenda-equipe': typeof AgendaEquipeRoute
   '/cadastro': typeof CadastroRoute
   '/comissoes-equipe': typeof ComissoesEquipeRoute
+  '/equipe': typeof EquipeRoute
   '/fanaticos': typeof FanaticosRoute
+  '/financeiro': typeof FinanceiroRoute
   '/login': typeof LoginRoute
   '/marca': typeof MarcaRoute
   '/minha-programacao': typeof MinhaProgramacaoRoute
@@ -126,7 +142,9 @@ export interface FileRoutesById {
   '/agenda-equipe': typeof AgendaEquipeRoute
   '/cadastro': typeof CadastroRoute
   '/comissoes-equipe': typeof ComissoesEquipeRoute
+  '/equipe': typeof EquipeRoute
   '/fanaticos': typeof FanaticosRoute
+  '/financeiro': typeof FinanceiroRoute
   '/login': typeof LoginRoute
   '/marca': typeof MarcaRoute
   '/minha-programacao': typeof MinhaProgramacaoRoute
@@ -143,7 +161,9 @@ export interface FileRouteTypes {
     | '/agenda-equipe'
     | '/cadastro'
     | '/comissoes-equipe'
+    | '/equipe'
     | '/fanaticos'
+    | '/financeiro'
     | '/login'
     | '/marca'
     | '/minha-programacao'
@@ -158,7 +178,9 @@ export interface FileRouteTypes {
     | '/agenda-equipe'
     | '/cadastro'
     | '/comissoes-equipe'
+    | '/equipe'
     | '/fanaticos'
+    | '/financeiro'
     | '/login'
     | '/marca'
     | '/minha-programacao'
@@ -173,7 +195,9 @@ export interface FileRouteTypes {
     | '/agenda-equipe'
     | '/cadastro'
     | '/comissoes-equipe'
+    | '/equipe'
     | '/fanaticos'
+    | '/financeiro'
     | '/login'
     | '/marca'
     | '/minha-programacao'
@@ -189,7 +213,9 @@ export interface RootRouteChildren {
   AgendaEquipeRoute: typeof AgendaEquipeRoute
   CadastroRoute: typeof CadastroRoute
   ComissoesEquipeRoute: typeof ComissoesEquipeRoute
+  EquipeRoute: typeof EquipeRoute
   FanaticosRoute: typeof FanaticosRoute
+  FinanceiroRoute: typeof FinanceiroRoute
   LoginRoute: typeof LoginRoute
   MarcaRoute: typeof MarcaRoute
   MinhaProgramacaoRoute: typeof MinhaProgramacaoRoute
@@ -243,11 +269,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/financeiro': {
+      id: '/financeiro'
+      path: '/financeiro'
+      fullPath: '/financeiro'
+      preLoaderRoute: typeof FinanceiroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/fanaticos': {
       id: '/fanaticos'
       path: '/fanaticos'
       fullPath: '/fanaticos'
       preLoaderRoute: typeof FanaticosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/equipe': {
+      id: '/equipe'
+      path: '/equipe'
+      fullPath: '/equipe'
+      preLoaderRoute: typeof EquipeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/comissoes-equipe': {
@@ -301,7 +341,9 @@ const rootRouteChildren: RootRouteChildren = {
   AgendaEquipeRoute: AgendaEquipeRoute,
   CadastroRoute: CadastroRoute,
   ComissoesEquipeRoute: ComissoesEquipeRoute,
+  EquipeRoute: EquipeRoute,
   FanaticosRoute: FanaticosRoute,
+  FinanceiroRoute: FinanceiroRoute,
   LoginRoute: LoginRoute,
   MarcaRoute: MarcaRoute,
   MinhaProgramacaoRoute: MinhaProgramacaoRoute,
@@ -313,3 +355,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
