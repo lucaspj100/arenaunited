@@ -59,13 +59,18 @@ export function buildWeeklyRecap({
   const inRange = (date: string, from: Date, to: Date) =>
     date >= iso(from) && date <= iso(to);
 
-  const approved = enrollments60d.filter((e) => e.status === "approved");
+  const approved = (enrollments60d ?? []).filter(
+    (e) => e && e.status === "approved" && typeof e.enrollmentDate === "string",
+  );
   const thisWeek = approved.filter((e) => inRange(e.enrollmentDate, monday, sunday));
   const lastWeek = approved.filter((e) => inRange(e.enrollmentDate, prevMonday, prevSunday));
 
   const thisDeals = thisWeek.length;
   const lastDeals = lastWeek.length;
-  const thisCommission = thisWeek.reduce((a, e) => a + e.commissionAmount, 0);
+  const thisCommission = thisWeek.reduce(
+    (a, e) => a + (Number.isFinite(e.commissionAmount) ? e.commissionAmount : 0),
+    0,
+  );
 
   // Melhor dia
   const byDay = new Map<string, number>();
@@ -101,10 +106,11 @@ export function buildWeeklyRecap({
   ];
 
   if (bestDay) {
-    const wd = new Date(bestDay.date + "T00:00:00").getDay();
+    const parsed = new Date(bestDay.date + "T00:00:00");
+    const wd = isNaN(parsed.getTime()) ? 0 : parsed.getDay();
     slides.push({
       kind: "bestDay",
-      weekday: WEEKDAYS_PT[wd],
+      weekday: WEEKDAYS_PT[wd] ?? "—",
       count: bestDay.count,
     });
   }
@@ -114,10 +120,10 @@ export function buildWeeklyRecap({
   }
 
   const tier = classifyPerformance({
-    rank: rank ?? totalSellers,
+    rank: rank ?? Math.max(totalSellers, 1),
     total: Math.max(totalSellers, 1),
-    deals: seller.deals,
-    goalDeals: seller.goalDeals,
+    deals: seller.deals ?? 0,
+    goalDeals: seller.goalDeals ?? 0,
   });
   const q = pickQuote(seller.id, tier);
   slides.push({ kind: "quote", text: q.text, author: q.author });
