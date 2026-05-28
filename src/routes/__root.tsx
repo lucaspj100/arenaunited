@@ -12,6 +12,40 @@ import { supabase } from "@/integrations/supabase/client";
 
 import appCss from "../styles.css?url";
 
+// Patch Node.prototype.removeChild / insertBefore to survive DOM mutations
+// caused by browser auto-translate (Google Translate) and extensions like
+// Grammarly. Without this, React throws NotFoundError mid-render and the
+// whole app shows the error boundary. Runs once on the client only.
+if (typeof window !== "undefined" && !(window as any).__lov_domPatched) {
+  (window as any).__lov_domPatched = true;
+  const origRemove = Node.prototype.removeChild;
+  Node.prototype.removeChild = function <T extends Node>(this: Node, child: T): T {
+    if (child.parentNode !== this) {
+      if (child.parentNode) {
+        try {
+          (child.parentNode as Node).removeChild(child);
+        } catch {
+          /* noop */
+        }
+      }
+      return child;
+    }
+    return origRemove.call(this, child) as T;
+  } as typeof Node.prototype.removeChild;
+
+  const origInsert = Node.prototype.insertBefore;
+  Node.prototype.insertBefore = function <T extends Node>(this: Node, newNode: T, refNode: Node | null): T {
+    if (refNode && refNode.parentNode !== this) {
+      try {
+        return origInsert.call(this, newNode, null) as T;
+      } catch {
+        return newNode;
+      }
+    }
+    return origInsert.call(this, newNode, refNode) as T;
+  } as typeof Node.prototype.insertBefore;
+}
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -83,6 +117,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "google", content: "notranslate" },
       { title: "Lovable App" },
       { name: "description", content: "Sales Star Ranker helps manage and rank sales teams with customizable criteria." },
       { name: "author", content: "Lovable" },
@@ -111,11 +146,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="pt-BR" translate="no">
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body className="notranslate">
         {children}
         <Scripts />
       </body>

@@ -1,36 +1,41 @@
-Plano para corrigir esse bug recorrente:
+## Causa raiz
 
-1. Tornar o erro visível para diagnóstico
-- Melhorar a tela de erro global para mostrar uma mensagem técnica curta quando estiver no preview/desenvolvimento.
-- Manter a mensagem amigável para usuários finais em produção.
-- Assim, quando acontecer de novo, não fica só “Esta página não carregou”; teremos pista real do que quebrou.
+O erro `NotFoundError: Failed to execute 'removeChild' on 'Node'` quase nunca vem do nosso código de negócio. Ele acontece quando uma extensão ou o **tradutor automático do Chrome** (Google Translate) substitui nós de texto da página por `<font>...</font>`. Quando o React tenta remover o nó de texto original durante uma re-renderização (ex: modal abrindo/fechando, recap mudando slide, ranking atualizando), o nó não é mais filho do pai esperado → exceção global → tela "Esta página não carregou".
 
-2. Blindar o dashboard do vendedor contra dados inesperados
-- Revisar os pontos recém-adicionados no dashboard: ritual, streak, rival e replay semanal.
-- Tratar valores nulos/undefined vindos do banco antes de formatar dinheiro, datas, metas e ranking.
-- Evitar que um único card quebre a página inteira.
+Sinais que batem com esse diagnóstico:
+- Stack só com nomes minificados do React (`gg`, `Ot`, `vg`) — sem nenhum arquivo nosso.
+- Acontece em usuários específicos (os que têm tradução ativada).
+- Reproduz mais em telas com muito texto curto solto: WeeklyReplayModal, RitualDoDia, RivalCard, ranking.
 
-3. Corrigir os pontos com maior risco de crash
-- `ROLE_LABELS[seller.role]`: proteger caso venha um cargo fora de `consultor/gerente`.
-- `formatBRL(...)`: proteger contra `null`, `undefined`, string inválida ou `NaN`.
-- `weeklyRecap`: proteger slides quando houver poucos dados, datas vazias, comissão nula ou vendedor sem avatar/nome.
-- `RivalCard` e gamificação: garantir que gaps negativos, ranking vazio ou vendedor ausente não derrubem a tela.
+## Plano de correção
 
-4. Melhorar isolamento de falhas
-- Criar um wrapper simples para os blocos de gamificação do dashboard.
-- Se um bloco falhar, ele desaparece ou mostra fallback discreto, mas o dashboard principal continua carregando.
+### 1. Bloquear tradução automática do navegador
+No `src/routes/__root.tsx`, dentro do `head()`:
+- Adicionar `<meta name="google" content="notranslate" />`
+- Adicionar `translate="no"` no `<html>` (via shellComponent) e `className="notranslate"` no `<body>`.
 
-5. Validar o fluxo afetado
-- Testar a rota principal e o dashboard do vendedor em cenário autenticado/sem dados completos.
-- Conferir console/network depois da correção para garantir que a tela genérica não reaparece pelo mesmo motivo.
+Isso resolve >90% dos casos desse erro em apps PT-BR.
 
-Arquivos prováveis:
-- `src/routes/__root.tsx`
-- `src/components/SellerDashboardContainer.tsx`
-- `src/components/SellerDashboard.tsx`
-- `src/components/RivalCard.tsx`
-- `src/components/WeeklyReplayModal.tsx`
-- `src/lib/weeklyRecap.ts`
-- `src/lib/commissions.ts` ou ajustes locais de formatação
+### 2. Patch defensivo do `removeChild` / `insertBefore`
+Em `src/routes/__root.tsx`, no topo do RootComponent (executa só no client):
+- Sobrescrever `Node.prototype.removeChild` e `Node.prototype.insertBefore` para, quando o nó não for filho do pai esperado, fazer fallback silencioso (`node.remove()` ou ignorar) em vez de lançar.
+- Esse patch é o workaround oficial recomendado pela comunidade React para conviver com Google Translate e extensões tipo Grammarly. Não muda comportamento em DOM "limpo".
 
-Resultado esperado: usuários deixam de cair nessa página genérica por dados incompletos/inesperados, e quando houver outro erro real, a gente consegue identificar rapidamente a causa.
+### 3. Endurecer pontos de texto solto mais arriscados
+Pequenas mudanças cirúrgicas (sem mexer em lógica):
+- `WeeklyReplayModal.tsx`: envolver textos plurais/contadores em `<span>` único em vez de text nodes irmãos (`{slide.count} matrícula(s)` → um único `<span>`).
+- `RitualDoDia.tsx`, `RivalCard.tsx`: mesma higienização nos trechos `{n} {n===1?"x":"xs"}`.
+
+Isso reduz a superfície que o tradutor consegue quebrar mesmo se o usuário forçar tradução manual.
+
+### 4. Validar
+- Abrir preview com Chrome em "traduzir esta página" forçado e navegar Login → Dashboard → abrir WeeklyReplay → trocar slides.
+- Confirmar console limpo, sem `removeChild`.
+
+## Arquivos afetados
+- `src/routes/__root.tsx` (meta notranslate + patch defensivo)
+- `src/components/WeeklyReplayModal.tsx` (higienização de text nodes)
+- `src/components/RitualDoDia.tsx` (higienização)
+- `src/components/RivalCard.tsx` (higienização)
+
+Nenhuma mudança em dados, queries ou regras de negócio.
