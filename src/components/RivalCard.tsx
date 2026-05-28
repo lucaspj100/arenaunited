@@ -10,9 +10,11 @@ export function RivalCard({
   ranked: Seller[];
   sellerId: string;
 }) {
-  if (!rank) return null;
+  if (!rank || !Array.isArray(ranked) || ranked.length === 0) return null;
   const me = ranked[rank - 1];
   if (!me) return null;
+  void sellerId;
+  const myDeals = Number.isFinite(me.deals) ? me.deals : 0;
 
   // Líder: mostra quem está colando atrás
   if (rank === 1) {
@@ -27,18 +29,19 @@ export function RivalCard({
         />
       );
     }
-    const gap = me.deals - chaser.deals;
+    const chaserDeals = Number.isFinite(chaser.deals) ? chaser.deals : 0;
+    const gap = myDeals - chaserDeals;
     return (
       <Banner
         icon={<Crown className="size-4 text-gold" />}
         label="Você lidera o ranking"
         body={
-          gap === 0
-            ? `${chaser.name} está empatado com você — não relaxe.`
-            : `${chaser.name} está ${gap} ${gap === 1 ? "matrícula" : "matrículas"} atrás.`
+          gap <= 0
+            ? `${chaser.name ?? "Rival"} está colado em você — não relaxe.`
+            : `${chaser.name ?? "Rival"} está ${gap} ${gap === 1 ? "matrícula" : "matrículas"} atrás.`
         }
         avatar={chaser.avatar}
-        rivalName={chaser.name}
+        rivalName={chaser.name ?? "Rival"}
         tone="gold"
       />
     );
@@ -47,18 +50,19 @@ export function RivalCard({
   // Tem alguém acima
   const rival = ranked[rank - 2];
   if (!rival) return null;
-  const gap = rival.deals - me.deals;
+  const rivalDeals = Number.isFinite(rival.deals) ? rival.deals : 0;
+  const gap = Math.max(0, rivalDeals - myDeals);
   return (
     <Banner
       icon={<Swords className="size-4 text-primary" />}
-      label={`Rival da semana · ${rival.name}`}
+      label={`Rival da semana · ${rival.name ?? "?"}`}
       body={
         gap === 0
-          ? `Empatados em ${me.deals} matrículas — próxima decide.`
+          ? `Empatados em ${myDeals} matrículas — próxima decide.`
           : `Você está ${gap} ${gap === 1 ? "matrícula" : "matrículas"} atrás. Ultrapasse hoje.`
       }
       avatar={rival.avatar}
-      rivalName={rival.name}
+      rivalName={rival.name ?? "Rival"}
       tone="primary"
       extra={
         <div className="flex items-center gap-1 text-[10px] font-mono text-muted-foreground">

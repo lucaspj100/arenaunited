@@ -79,16 +79,16 @@ export function SellerDashboard({
       <section className="flex flex-wrap items-center gap-5 rounded-2xl border border-border bg-card p-5">
         <div className="size-20 rounded-full bg-secondary overflow-hidden flex items-center justify-center font-display font-black text-2xl shrink-0">
           {seller.avatar ? (
-            <img src={seller.avatar} alt={seller.name} className="size-full object-cover" />
+            <img src={seller.avatar} alt={seller.name ?? ""} className="size-full object-cover" />
           ) : (
-            seller.name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
+            (seller.name ?? "?").split(" ").map((n) => n[0] ?? "").slice(0, 2).join("").toUpperCase()
           )}
         </div>
         <div className="flex-1 min-w-[180px]">
           <div className="text-xs text-muted-foreground uppercase tracking-wider font-mono">
             {ROLE_LABELS[seller.role] ?? seller.role}
           </div>
-          <h2 className="font-display font-black text-2xl md:text-3xl leading-tight">{seller.name}</h2>
+          <h2 className="font-display font-black text-2xl md:text-3xl leading-tight">{seller.name ?? "—"}</h2>
           <div className="text-xs text-muted-foreground mt-1">{range.label} · {range.from} → {range.to}</div>
           {headerSlot && <div className="mt-3">{headerSlot}</div>}
         </div>

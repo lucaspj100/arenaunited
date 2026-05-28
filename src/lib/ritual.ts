@@ -52,34 +52,42 @@ export function buildRitual({
   const monthStart = iso(new Date(now.getFullYear(), now.getMonth(), 1));
   const monthEnd = iso(new Date(now.getFullYear(), now.getMonth() + 1, 0));
 
+  const safeInterviews = (interviews60d ?? []).filter((i) => i && typeof i.scheduledDate === "string");
+  const safeEnrollments = (enrollments60d ?? []).filter((e) => e && typeof e.enrollmentDate === "string");
+
   // Hoje
-  const interviewsToday = interviews60d.filter((i) => i.scheduledDate === todayKey);
+  const interviewsToday = safeInterviews.filter((i) => i.scheduledDate === todayKey);
   const interviewsScheduledToday = interviewsToday.length;
-  const dealsToday = enrollments60d.filter(
+  const dealsToday = safeEnrollments.filter(
     (e) => e.enrollmentDate === todayKey && e.status === "approved",
   ).length;
 
   // Ontem
-  const interviewsYesterday = interviews60d.filter((i) => i.scheduledDate === yKey).length;
+  const interviewsYesterday = safeInterviews.filter((i) => i.scheduledDate === yKey).length;
 
   // Mês
-  const monthApproved = enrollments60d.filter(
+  const monthApproved = safeEnrollments.filter(
     (e) =>
       e.status === "approved" &&
       e.enrollmentDate >= monthStart &&
       e.enrollmentDate <= monthEnd,
   );
   const monthDeals = monthApproved.length;
-  const monthMaterial = monthApproved.reduce((a, e) => a + e.materialValue, 0);
-  const missingDeals = Math.max(0, seller.goalDeals - monthDeals);
-  const missingMaterial = Math.max(0, seller.goalMaterial - monthMaterial);
+  const monthMaterial = monthApproved.reduce(
+    (a, e) => a + (Number.isFinite(e.materialValue) ? e.materialValue : 0),
+    0,
+  );
+  const goalDeals = Number.isFinite(seller.goalDeals) ? seller.goalDeals : 0;
+  const goalMaterial = Number.isFinite(seller.goalMaterial) ? seller.goalMaterial : 0;
+  const missingDeals = Math.max(0, goalDeals - monthDeals);
+  const missingMaterial = Math.max(0, goalMaterial - monthMaterial);
 
   const daysLeftInMonth =
     daysInMonth(now) - now.getDate() + 1;
 
   // ----- Modo crise: 1 ação simples -----
   if (tier === "struggling") {
-    const nextPending = interviewsToday.find((i) => i.status === "marcada");
+    const nextPending = interviewsToday.find((i) => i.status === "marcada" && i.leadName);
     if (nextPending) {
       return {
         title: "Uma coisa de cada vez",
@@ -87,7 +95,7 @@ export function buildRitual({
           {
             id: "next-interview",
             label: `Realize a entrevista de ${nextPending.leadName}`,
-            hint: `Hoje às ${nextPending.scheduledTime}`,
+            hint: nextPending.scheduledTime ? `Hoje às ${nextPending.scheduledTime}` : "Hoje",
             current: 0,
             target: 1,
             done: false,

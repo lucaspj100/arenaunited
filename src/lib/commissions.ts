@@ -56,8 +56,15 @@ export function computeMaterialAward(role: SellerRole, total: number): MaterialP
   return { award, nextTier, nextMin, missing, reachedMax, progressPct, message };
 }
 
-export const formatBRL = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
+export const formatBRL = (v: number | null | undefined) => {
+  const n = typeof v === "number" && Number.isFinite(v) ? v : Number(v);
+  const safe = Number.isFinite(n) ? n : 0;
+  return safe.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+  });
+};
 
 // =========== Períodos ===========
 export type PeriodKey = "today" | "week" | "month" | "lastMonth" | "custom";

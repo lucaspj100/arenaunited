@@ -37,16 +37,25 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+  const isPreview =
+    typeof window !== "undefined" &&
+    /lovable(?:project)?\.app|localhost|127\.0\.0\.1/.test(window.location.hostname);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
+      <div className="max-w-lg text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           This page didn't load
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Something went wrong on our end. You can try refreshing or head back home.
         </p>
+        {isPreview && (
+          <pre className="mt-4 max-h-60 overflow-auto rounded-md border border-destructive/40 bg-destructive/5 p-3 text-left text-xs text-destructive whitespace-pre-wrap break-words">
+            {error?.message ?? String(error)}
+            {error?.stack ? `\n\n${error.stack}` : ""}
+          </pre>
+        )}
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
