@@ -52,10 +52,10 @@ const COLS =
 const toInterview = (r: Row): Interview => ({
   id: r.id,
   sellerId: r.seller_id,
-  leadName: r.lead_name,
+  leadName: r.lead_name ?? "",
   leadPhone: r.lead_phone,
   scheduledDate: r.scheduled_date,
-  scheduledTime: r.scheduled_time.slice(0, 5),
+  scheduledTime: typeof r.scheduled_time === "string" ? r.scheduled_time.slice(0, 5) : "",
   status: r.status,
   notes: r.notes,
   createdAt: r.created_at,
