@@ -1,41 +1,54 @@
-## Causa raiz
+## Objetivo
 
-O erro `NotFoundError: Failed to execute 'removeChild' on 'Node'` quase nunca vem do nosso código de negócio. Ele acontece quando uma extensão ou o **tradutor automático do Chrome** (Google Translate) substitui nós de texto da página por `<font>...</font>`. Quando o React tenta remover o nó de texto original durante uma re-renderização (ex: modal abrindo/fechando, recap mudando slide, ranking atualizando), o nó não é mais filho do pai esperado → exceção global → tela "Esta página não carregou".
+Permitir que **admin, CEO, presidente e diretor** cadastrem matrículas para **qualquer vendedor**, e facilitar o acesso ao dashboard individual de cada vendedor.
 
-Sinais que batem com esse diagnóstico:
-- Stack só com nomes minificados do React (`gg`, `Ot`, `vg`) — sem nenhum arquivo nosso.
-- Acontece em usuários específicos (os que têm tradução ativada).
-- Reproduz mais em telas com muito texto curto solto: WeeklyReplayModal, RitualDoDia, RivalCard, ranking.
+---
 
-## Plano de correção
+## 1. Permissões no banco (migration)
 
-### 1. Bloquear tradução automática do navegador
-No `src/routes/__root.tsx`, dentro do `head()`:
-- Adicionar `<meta name="google" content="notranslate" />`
-- Adicionar `translate="no"` no `<html>` (via shellComponent) e `className="notranslate"` no `<body>`.
+Hoje só `admin` consegue criar matrícula para qualquer vendedor. Diretor/CEO/presidente só conseguem se forem `director_id` do vendedor.
 
-Isso resolve >90% dos casos desse erro em apps PT-BR.
+Vou criar nova policy permitindo que qualquer usuário com role `admin`, `ceo`, `presidente` ou `diretor` cadastre/edite/aprove/exclua matrículas de **qualquer vendedor**:
 
-### 2. Patch defensivo do `removeChild` / `insertBefore`
-Em `src/routes/__root.tsx`, no topo do RootComponent (executa só no client):
-- Sobrescrever `Node.prototype.removeChild` e `Node.prototype.insertBefore` para, quando o nó não for filho do pai esperado, fazer fallback silencioso (`node.remove()` ou ignorar) em vez de lançar.
-- Esse patch é o workaround oficial recomendado pela comunidade React para conviver com Google Translate e extensões tipo Grammarly. Não muda comportamento em DOM "limpo".
+- Substituir `enrollments_diretor_*` por policies baseadas em `is_staff(auth.uid())` (que já cobre admin/diretor/ceo/presidente).
+- Manter as policies de vendedor intactas (cada vendedor só vê/edita as próprias).
+- Resultado: staff = acesso total às matrículas.
 
-### 3. Endurecer pontos de texto solto mais arriscados
-Pequenas mudanças cirúrgicas (sem mexer em lógica):
-- `WeeklyReplayModal.tsx`: envolver textos plurais/contadores em `<span>` único em vez de text nodes irmãos (`{slide.count} matrícula(s)` → um único `<span>`).
-- `RitualDoDia.tsx`, `RivalCard.tsx`: mesma higienização nos trechos `{n} {n===1?"x":"xs"}`.
+## 2. Botão "Nova matrícula" no dashboard individual
 
-Isso reduz a superfície que o tradutor consegue quebrar mesmo se o usuário forçar tradução manual.
+Em `src/routes/vendedor.$sellerId.tsx`:
+- Quando o usuário logado for staff (admin/ceo/presidente/diretor), mostrar botão "Nova matrícula" no header.
+- Botão abre o `EnrollmentFormDialog` já com `defaultSellerId` = vendedor da rota e `canEditAll=false` (cadastra direto para ele, sem seletor).
+- Após salvar, dar refresh nos dados (realtime já cuida via subscription).
 
-### 4. Validar
-- Abrir preview com Chrome em "traduzir esta página" forçado e navegar Login → Dashboard → abrir WeeklyReplay → trocar slides.
-- Confirmar console limpo, sem `removeChild`.
+## 3. Atalho "+" no ranking
+
+Em `src/components/SellerRow.tsx`:
+- Adicionar prop opcional `onAddEnrollment?: () => void`.
+- Quando presente, renderizar ícone "+" (GraduationCap+) ao lado dos botões de editar/remover, com tooltip "Cadastrar matrícula".
+
+Em `src/components/RankingView.tsx`:
+- Manter um estado `enrollSellerId: string | null`.
+- Passar `onAddEnrollment` para `SellerRow` somente quando `isStaff`.
+- Renderizar um único `EnrollmentFormDialog` controlado por esse estado, com `defaultSellerId={enrollSellerId}` e `sellers={...}` (pra mostrar nome).
+- Após salvar, fazer `fetchSellers()` para atualizar contagens.
+
+## 4. Affordance visual no nome
+
+`SellerRow.tsx` já tem `<Link>` no nome do vendedor apontando para `/vendedor/$sellerId`. Vou:
+- Adicionar `cursor-pointer`, sublinhado discreto no hover e tooltip "Ver dashboard".
+- Adicionar ícone pequeno (chevron-right) à direita do nome para indicar clicável.
+
+Já validado que a rota `/vendedor/:sellerId` libera acesso a staff (ver `vendedor.$sellerId.tsx` linhas 42–47: `if (isStaff) return true`), então não há trabalho de permissão de rota.
+
+---
 
 ## Arquivos afetados
-- `src/routes/__root.tsx` (meta notranslate + patch defensivo)
-- `src/components/WeeklyReplayModal.tsx` (higienização de text nodes)
-- `src/components/RitualDoDia.tsx` (higienização)
-- `src/components/RivalCard.tsx` (higienização)
 
-Nenhuma mudança em dados, queries ou regras de negócio.
+- **migration**: nova policy `enrollments_staff_*` (insert/update/delete/select) substituindo as `_diretor_*`.
+- `src/routes/vendedor.$sellerId.tsx` — header com botão para staff.
+- `src/components/SellerDashboardContainer.tsx` — aceitar `headerExtras` à direita também (ou passar via novo slot) para o botão.
+- `src/components/SellerRow.tsx` — prop `onAddEnrollment` + affordance no nome.
+- `src/components/RankingView.tsx` — estado e diálogo único para cadastro rápido.
+
+Sem alteração em business logic de comissão (a trigger `enrollments_apply_commission` calcula automaticamente).

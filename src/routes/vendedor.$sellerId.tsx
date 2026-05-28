@@ -1,10 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, GraduationCap } from "lucide-react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { fetchSellers } from "@/lib/storage";
 import { Seller } from "@/lib/ranking";
 import { SellerDashboardContainer } from "@/components/SellerDashboardContainer";
+import { EnrollmentFormDialog } from "@/components/EnrollmentFormDialog";
+import { createEnrollment } from "@/lib/enrollments";
 
 export const Route = createFileRoute("/vendedor/$sellerId")({
   component: SellerDashboardPage,
@@ -19,6 +21,8 @@ function SellerDashboardPage() {
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [loadingSellers, setLoadingSellers] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [enrollOpen, setEnrollOpen] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!authLoading && !userId) navigate({ to: "/login" });
@@ -33,7 +37,7 @@ function SellerDashboardPage() {
     return () => {
       mounted = false;
     };
-  }, [sellerId]);
+  }, [sellerId, reloadKey]);
 
   const seller = sellers.find((s) => s.id === sellerId) ?? null;
 
@@ -93,11 +97,36 @@ function SellerDashboardPage() {
         sellerId={sellerId}
         showMotivation={isOwn}
         headerExtras={
-          <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="size-4" /> Voltar
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="size-4" /> Voltar
+            </Link>
+            {isStaff && (
+              <button
+                onClick={() => setEnrollOpen(true)}
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90"
+              >
+                <GraduationCap className="size-4" /> Nova matrícula
+              </button>
+            )}
+          </div>
         }
       />
+
+      {isStaff && seller && (
+        <EnrollmentFormDialog
+          open={enrollOpen}
+          onOpenChange={setEnrollOpen}
+          defaultSellerId={seller.id}
+          canEditAll={false}
+          currentRole={seller.role}
+          currentSellerName={seller.name}
+          onSave={async (input) => {
+            await createEnrollment(input);
+            setReloadKey((k) => k + 1);
+          }}
+        />
+      )}
     </main>
   );
 }

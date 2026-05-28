@@ -1,5 +1,5 @@
 import { Seller, formatBRL } from "@/lib/ranking";
-import { Trash2, TrendingUp, Pencil, Crown } from "lucide-react";
+import { Trash2, TrendingUp, Pencil, Crown, GraduationCap, ChevronRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
 function initials(name: string) {
@@ -12,6 +12,7 @@ export function SellerRow({
   onChange,
   onDelete,
   onEdit,
+  onAddEnrollment,
   readOnly = false,
   showEditButton = true,
   editLabel,
@@ -24,6 +25,7 @@ export function SellerRow({
   onChange: (patch: Partial<Seller>) => void;
   onDelete: () => void;
   onEdit: () => void;
+  onAddEnrollment?: () => void;
   readOnly?: boolean;
   showEditButton?: boolean;
   editLabel?: string;
@@ -57,26 +59,16 @@ export function SellerRow({
             initials(seller.name)
           )}
         </div>
-        {readOnly ? (
-          <Link
-            to="/vendedor/$sellerId"
-            params={{ sellerId: seller.id }}
-            preload="intent"
-            className="font-semibold truncate min-w-0 text-sm hover:text-primary transition-colors"
-          >
-            {seller.name}
-          </Link>
-        ) : (
-          <Link
-            to="/vendedor/$sellerId"
-            params={{ sellerId: seller.id }}
-            preload="intent"
-            className="font-semibold truncate min-w-0 text-sm hover:text-primary transition-colors"
-            title="Ver dashboard"
-          >
-            {seller.name}
-          </Link>
-        )}
+        <Link
+          to="/vendedor/$sellerId"
+          params={{ sellerId: seller.id }}
+          preload="intent"
+          title="Ver dashboard do vendedor"
+          className="group/name inline-flex items-center gap-1 font-semibold truncate min-w-0 text-sm hover:text-primary hover:underline underline-offset-2 transition-colors cursor-pointer"
+        >
+          <span className="truncate">{seller.name}</span>
+          <ChevronRight className="size-3 opacity-50 group-hover/name:opacity-100 group-hover/name:translate-x-0.5 transition-all shrink-0" />
+        </Link>
       </div>
 
       <Metric label="Ent. marcadas (mês)" value={seller.monthScheduled ?? 0} />
@@ -99,6 +91,16 @@ export function SellerRow({
       </div>
 
       <div className="flex items-center gap-1 shrink-0">
+        {onAddEnrollment && (
+          <button
+            onClick={onAddEnrollment}
+            className="text-muted-foreground hover:text-gold transition p-1"
+            aria-label="Cadastrar matrícula"
+            title="Cadastrar matrícula"
+          >
+            <GraduationCap className="size-4" />
+          </button>
+        )}
         {showEditButton && (
           <button
             onClick={onEdit}
