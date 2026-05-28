@@ -34,7 +34,9 @@ export function RankingView() {
   const [editingMyId, setEditingMyId] = useState<string | null>(null);
   const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const { userId, email, role, isStaff, loading: authLoading } = useCurrentUser();
-  const { isFranchisee, isManager } = useCurrentUser();
+  const cu = useCurrentUser();
+  const isFranchisee = cu.isFranchisee;
+  const isManager = cu.isManager;
   const isAdmin = role === "admin";
   const [teamTab, setTeamTab] = useState<"all" | "mine">("all");
   const [enrollAgg, setEnrollAgg] = useState<Record<string, { monthly: number; commission: number }>>({});
