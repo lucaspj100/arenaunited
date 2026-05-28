@@ -44,7 +44,7 @@ export type FinancialScopeKpis = {
   totalCommission: number;
   totalExpectedRevenue: number;
 
-  generalAutomationCost: number;
+  salariesTotal: number;
   generalToolsCost: number;
   paidTrafficCost: number;
   otherCommercialCosts: number;
@@ -84,22 +84,24 @@ export function computeScopeKpis(
     expected += expectedRevenue(e, settings);
   }
 
+  const salariesTotal = sellerCosts.reduce(
+    (acc, s) => acc + (s.activeForFinancialAnalysis ? s.monthlySalary : 0),
+    0,
+  );
   const individualCostsTotal = sellerCosts.reduce(
     (acc, s) =>
       acc +
       (s.activeForFinancialAnalysis
-        ? s.monthlyAutomationCost + s.monthlyToolsCost
+        ? s.monthlySalary + s.monthlyToolsCost + s.otherIndividualCosts
         : 0),
     0,
   );
 
-  const generalAutomationCost = includeGeneral ? settings.generalAutomationCost : 0;
   const generalToolsCost = includeGeneral ? settings.generalToolsCost : 0;
   const paidTrafficCost = includeGeneral ? settings.paidTrafficCost : 0;
   const otherCommercialCosts = includeGeneral ? settings.otherCommercialCosts : 0;
 
   const totalInvestment =
-    generalAutomationCost +
     generalToolsCost +
     paidTrafficCost +
     otherCommercialCosts +
@@ -114,7 +116,7 @@ export function computeScopeKpis(
     totalLTVAdjusted: round2(ltvAdj),
     totalCommission: round2(commission),
     totalExpectedRevenue: round2(expected),
-    generalAutomationCost: round2(generalAutomationCost),
+    salariesTotal: round2(salariesTotal),
     generalToolsCost: round2(generalToolsCost),
     paidTrafficCost: round2(paidTrafficCost),
     otherCommercialCosts: round2(otherCommercialCosts),
