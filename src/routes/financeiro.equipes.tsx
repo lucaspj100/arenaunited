@@ -7,6 +7,8 @@ import { fetchEnrollments } from "@/lib/enrollments";
 import {
   fetchFinancialSettings,
   fetchSellerFinancialSettings,
+  fetchTeamFinancialSettings,
+  mergeWithTeam,
   type FinancialSettings,
   type SellerFinancialSettings,
 } from "@/lib/financialSettings";
@@ -23,7 +25,7 @@ export const Route = createFileRoute("/financeiro/equipes")({
 type SellerLite = { id: string; name: string; role: SellerRole };
 
 function EquipesPage() {
-  const { isStaff } = useCurrentUser();
+  const { isStaff, isManager, userId } = useCurrentUser();
   const [periodKey, setPeriodKey] = useState<PeriodKey>("month");
   const [custom, setCustom] = useState(() => {
     const r = getPeriodRange("month");
@@ -43,14 +45,17 @@ function EquipesPage() {
     (async () => {
       try {
         const ids = await getAccessibleSellerIds();
-        const [s, costs, rows, sellersRes] = await Promise.all([
+        const [globalS, team, costs, rows, sellersRes] = await Promise.all([
           fetchFinancialSettings(),
+          userId && isManager && !isStaff
+            ? fetchTeamFinancialSettings(userId)
+            : Promise.resolve(null),
           fetchSellerFinancialSettings(ids ?? undefined),
           fetchEnrollments({ from: range.from, to: range.to, status: "approved" }),
           supabase.from("sellers").select("id,name,role"),
         ]);
         if (!mounted) return;
-        setSettings(s);
+        setSettings(mergeWithTeam(globalS, team));
         setSellerCosts(costs);
         const allSellers = (sellersRes.data ?? []) as SellerLite[];
         const filteredSellers = ids === null ? allSellers : allSellers.filter((x) => ids.includes(x.id));
@@ -64,7 +69,7 @@ function EquipesPage() {
     return () => {
       mounted = false;
     };
-  }, [range.from, range.to]);
+  }, [range.from, range.to, userId, isManager, isStaff]);
 
   const rows = useMemo(() => {
     if (!settings) return [];
