@@ -13,6 +13,7 @@ import { RitualDoDia } from "@/components/RitualDoDia";
 import { RivalCard } from "@/components/RivalCard";
 import { StreakBadge } from "@/components/StreakBadge";
 import { WeeklyReplayModal } from "@/components/WeeklyReplayModal";
+import { SafeBlock } from "@/components/SafeBlock";
 import { classifyPerformance } from "@/lib/motivation";
 import { buildRitual } from "@/lib/ritual";
 import { computeStreak } from "@/lib/streak";
@@ -279,7 +280,11 @@ export function SellerDashboardContainer({
           interviewsPrevious={prevInterviews}
           mode={showMotivation ? tier : undefined}
           headerSlot={
-            showMotivation && streak > 0 ? <StreakBadge streak={streak} /> : undefined
+            showMotivation && streak > 0 ? (
+              <SafeBlock name="StreakBadge">
+                <StreakBadge streak={streak} />
+              </SafeBlock>
+            ) : undefined
           }
           topSlot={
             showMotivation ? (
@@ -295,20 +300,30 @@ export function SellerDashboardContainer({
                     </button>
                   </div>
                 )}
-                <RivalCard rank={rank} ranked={ranked} sellerId={sellerId} />
-                <MotivationCard sellerId={sellerId} rankedSellers={ranked} />
-                {ritual && <RitualDoDia plan={ritual} />}
+                <SafeBlock name="RivalCard">
+                  <RivalCard rank={rank} ranked={ranked} sellerId={sellerId} />
+                </SafeBlock>
+                <SafeBlock name="MotivationCard">
+                  <MotivationCard sellerId={sellerId} rankedSellers={ranked} />
+                </SafeBlock>
+                {ritual && (
+                  <SafeBlock name="RitualDoDia">
+                    <RitualDoDia plan={ritual} />
+                  </SafeBlock>
+                )}
               </div>
             ) : undefined
           }
         />
       )}
       {showMotivation && recap && (
-        <WeeklyReplayModal
-          open={replayOpen}
-          slides={recap.slides}
-          onClose={() => setReplayOpen(false)}
-        />
+        <SafeBlock name="WeeklyReplayModal" fallback={null}>
+          <WeeklyReplayModal
+            open={replayOpen}
+            slides={recap.slides}
+            onClose={() => setReplayOpen(false)}
+          />
+        </SafeBlock>
       )}
     </>
   );
