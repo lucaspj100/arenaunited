@@ -313,6 +313,12 @@ export function RankingView() {
               <Link to="/agenda-equipe" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
                 Agenda da Equipe
               </Link>
+              <Link to="/equipe" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
+                Equipes
+              </Link>
+              <Link to="/financeiro" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
+                Financeiro
+              </Link>
               {isAdmin && (
                 <Link to="/marca" className="flex items-center gap-1 px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
                   <Palette className="size-3.5" /> Marca
@@ -325,6 +331,16 @@ export function RankingView() {
               )}
               <Link to="/comissoes-equipe" className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90">
                 {role === "admin" ? "Comissões da Equipe" : "Comissões da Minha Equipe"}
+              </Link>
+            </>
+          )}
+          {!isStaff && isManager && (
+            <>
+              <Link to="/equipe" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
+                Minha Equipe
+              </Link>
+              <Link to="/financeiro" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
+                Financeiro
               </Link>
             </>
           )}
