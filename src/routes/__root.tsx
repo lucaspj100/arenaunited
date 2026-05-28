@@ -19,7 +19,7 @@ import appCss from "../styles.css?url";
 if (typeof window !== "undefined" && !(window as any).__lov_domPatched) {
   (window as any).__lov_domPatched = true;
   const origRemove = Node.prototype.removeChild;
-  Node.prototype.removeChild = function <T extends Node>(child: T): T {
+  Node.prototype.removeChild = function <T extends Node>(this: Node, child: T): T {
     if (child.parentNode !== this) {
       if (child.parentNode) {
         try {
@@ -34,7 +34,7 @@ if (typeof window !== "undefined" && !(window as any).__lov_domPatched) {
   } as typeof Node.prototype.removeChild;
 
   const origInsert = Node.prototype.insertBefore;
-  Node.prototype.insertBefore = function <T extends Node>(newNode: T, refNode: Node | null): T {
+  Node.prototype.insertBefore = function <T extends Node>(this: Node, newNode: T, refNode: Node | null): T {
     if (refNode && refNode.parentNode !== this) {
       try {
         return origInsert.call(this, newNode, null) as T;
