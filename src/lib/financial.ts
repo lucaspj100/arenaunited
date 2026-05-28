@@ -44,7 +44,7 @@ export type FinancialScopeKpis = {
   totalCommission: number;
   totalExpectedRevenue: number;
 
-  generalAutomationCost: number;
+  salariesTotal: number;
   generalToolsCost: number;
   paidTrafficCost: number;
   otherCommercialCosts: number;
