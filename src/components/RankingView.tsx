@@ -490,6 +490,21 @@ export function RankingView() {
         }}
       />
 
+      {isStaff && (
+        <EnrollmentFormDialog
+          open={!!enrollSellerId}
+          onOpenChange={(o) => !o && setEnrollSellerId(null)}
+          defaultSellerId={enrollSellerId}
+          sellers={sellers.map((s) => ({ id: s.id, name: s.name, role: s.role }))}
+          canEditAll={true}
+          onSave={async (input) => {
+            await createEnrollment(input);
+            const data = await fetchSellers();
+            setSellers(data);
+          }}
+        />
+      )}
+
       {editingBrand && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
