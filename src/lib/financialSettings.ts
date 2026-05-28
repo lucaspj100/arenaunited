@@ -55,17 +55,20 @@ export async function updateFinancialSettings(
   id: string,
   patch: Partial<FinancialSettings>,
 ): Promise<void> {
-  const row: Record<string, unknown> = {};
-  if (patch.averageLifetimeMonths !== undefined) row.average_lifetime_months = patch.averageLifetimeMonths;
-  if (patch.contractDurationMonths !== undefined) row.contract_duration_months = patch.contractDurationMonths;
-  if (patch.cancellationRate !== undefined) row.cancellation_rate = patch.cancellationRate;
-  if (patch.generalToolsCost !== undefined) row.general_tools_cost = patch.generalToolsCost;
-  if (patch.paidTrafficCost !== undefined) row.paid_traffic_cost = patch.paidTrafficCost;
-  if (patch.otherCommercialCosts !== undefined) row.other_commercial_costs = patch.otherCommercialCosts;
-  if (patch.defaultEnrollmentFeeType !== undefined) row.default_enrollment_fee_type = patch.defaultEnrollmentFeeType;
-  if (patch.defaultEnrollmentFeeValue !== undefined) row.default_enrollment_fee_value = patch.defaultEnrollmentFeeValue;
-  if (patch.defaultSchoolRetentionPercentage !== undefined) row.default_school_retention_percentage = patch.defaultSchoolRetentionPercentage;
-  const { error } = await supabase.from("financial_settings").update(row).eq("id", id);
+  const { error } = await supabase
+    .from("financial_settings")
+    .update({
+      average_lifetime_months: patch.averageLifetimeMonths,
+      contract_duration_months: patch.contractDurationMonths,
+      cancellation_rate: patch.cancellationRate,
+      general_tools_cost: patch.generalToolsCost,
+      paid_traffic_cost: patch.paidTrafficCost,
+      other_commercial_costs: patch.otherCommercialCosts,
+      default_enrollment_fee_type: patch.defaultEnrollmentFeeType,
+      default_enrollment_fee_value: patch.defaultEnrollmentFeeValue,
+      default_school_retention_percentage: patch.defaultSchoolRetentionPercentage,
+    })
+    .eq("id", id);
   if (error) throw error;
 }
 
@@ -113,19 +116,23 @@ export async function upsertTeamFinancialSettings(
   managerUserId: string,
   patch: Partial<TeamFinancialSettings>,
 ): Promise<void> {
-  const row: Record<string, unknown> = { manager_user_id: managerUserId };
-  if (patch.averageLifetimeMonths !== undefined) row.average_lifetime_months = patch.averageLifetimeMonths;
-  if (patch.contractDurationMonths !== undefined) row.contract_duration_months = patch.contractDurationMonths;
-  if (patch.cancellationRate !== undefined) row.cancellation_rate = patch.cancellationRate;
-  if (patch.enrollmentFeeType !== undefined) row.enrollment_fee_type = patch.enrollmentFeeType;
-  if (patch.enrollmentFeeValue !== undefined) row.enrollment_fee_value = patch.enrollmentFeeValue;
-  if (patch.schoolRetentionPercentage !== undefined) row.school_retention_percentage = patch.schoolRetentionPercentage;
-  if (patch.generalToolsCost !== undefined) row.general_tools_cost = patch.generalToolsCost;
-  if (patch.paidTrafficCost !== undefined) row.paid_traffic_cost = patch.paidTrafficCost;
-  if (patch.otherCommercialCosts !== undefined) row.other_commercial_costs = patch.otherCommercialCosts;
   const { error } = await supabase
     .from("team_financial_settings")
-    .upsert(row, { onConflict: "manager_user_id" });
+    .upsert(
+      {
+        manager_user_id: managerUserId,
+        average_lifetime_months: patch.averageLifetimeMonths,
+        contract_duration_months: patch.contractDurationMonths,
+        cancellation_rate: patch.cancellationRate,
+        enrollment_fee_type: patch.enrollmentFeeType,
+        enrollment_fee_value: patch.enrollmentFeeValue,
+        school_retention_percentage: patch.schoolRetentionPercentage,
+        general_tools_cost: patch.generalToolsCost,
+        paid_traffic_cost: patch.paidTrafficCost,
+        other_commercial_costs: patch.otherCommercialCosts,
+      },
+      { onConflict: "manager_user_id" },
+    );
   if (error) throw error;
 }
 
@@ -184,17 +191,19 @@ export async function upsertSellerFinancialSettings(
   s: SellerFinancialSettings,
   managerUserId?: string,
 ): Promise<void> {
-  const row: Record<string, unknown> = {
-    seller_id: s.sellerId,
-    monthly_salary: s.monthlySalary,
-    monthly_tools_cost: s.monthlyToolsCost,
-    other_individual_costs: s.otherIndividualCosts,
-    financial_notes: s.financialNotes,
-    active_for_financial_analysis: s.activeForFinancialAnalysis,
-  };
-  if (managerUserId) row.manager_user_id = managerUserId;
   const { error } = await supabase
     .from("seller_financial_settings")
-    .upsert(row, { onConflict: "seller_id" });
+    .upsert(
+      {
+        seller_id: s.sellerId,
+        monthly_salary: s.monthlySalary,
+        monthly_tools_cost: s.monthlyToolsCost,
+        other_individual_costs: s.otherIndividualCosts,
+        financial_notes: s.financialNotes,
+        active_for_financial_analysis: s.activeForFinancialAnalysis,
+        manager_user_id: managerUserId,
+      },
+      { onConflict: "seller_id" },
+    );
   if (error) throw error;
 }
