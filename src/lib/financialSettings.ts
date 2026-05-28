@@ -72,7 +72,18 @@ export async function updateFinancialSettings(
   id: string,
   patch: Partial<FinancialSettings>,
 ): Promise<void> {
-  const row: Record<string, unknown> = {};
+  const row: {
+    average_lifetime_months?: number;
+    contract_duration_months?: number;
+    cancellation_rate?: number;
+    general_automation_cost?: number;
+    general_tools_cost?: number;
+    paid_traffic_cost?: number;
+    other_commercial_costs?: number;
+    default_enrollment_fee_type?: "fixed" | "percent";
+    default_enrollment_fee_value?: number;
+    default_school_retention_percentage?: number;
+  } = {};
   if (patch.averageLifetimeMonths !== undefined)
     row.average_lifetime_months = patch.averageLifetimeMonths;
   if (patch.contractDurationMonths !== undefined)
