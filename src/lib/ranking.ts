@@ -82,5 +82,12 @@ export function rankSellers(sellers: Seller[], w: Weights) {
     });
 }
 
-export const formatBRL = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+export const formatBRL = (v: number | null | undefined) => {
+  const n = typeof v === "number" && Number.isFinite(v) ? v : Number(v);
+  const safe = Number.isFinite(n) ? n : 0;
+  return safe.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    maximumFractionDigits: 0,
+  });
+};
