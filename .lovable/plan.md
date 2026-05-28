@@ -1,173 +1,129 @@
-# Plano técnico — Financeiro Comercial + Equipes
 
-Objetivo: adicionar gestão de equipe (diretor/franqueado) e um módulo financeiro completo (CAC, LTV, MRR, ROI), reutilizando `sellers`, `enrollments`, `interviews`, `user_roles` sem tocar em triggers de comissão, aprovação, ranking ou views existentes.
+# Plano — Financeiro Comercial como calculadora editável por equipe/franquia
 
----
+## 1. Remoção completa de "automação"
 
-## 1. Novas tabelas (3)
+Itens a remover (UI, código, banco, textos):
 
-### 1.1 `team_seller_links` — vínculo diretor/franqueado ↔ vendedor
-| Campo | Tipo | Notas |
-|---|---|---|
-| id | uuid PK | |
-| manager_user_id | uuid | dono da equipe (auth.users.id) |
-| seller_id | uuid | referencia `sellers.id` |
-| active | boolean default true | |
-| created_at / updated_at | timestamptz | |
-| created_by / updated_by | uuid | auditoria |
+- **UI / Componentes**
+  - `src/routes/financeiro.config.tsx`: campo "Custo automações (R$)" (global) e coluna "Automação (R$/mês)" por vendedor.
+  - `src/routes/financeiro.geral.tsx`, `financeiro.equipes.tsx`, `financeiro.vendedor.$sellerId.tsx`: qualquer KPI/card/legenda mencionando automação, "investimento em automação", "capacidade de automação", "limite saudável", "simulador de automação".
+- **Lógica** (`src/lib/financial.ts`): remover `generalAutomationCost` e `monthlyAutomationCost` das somas; ajustar `FinancialScopeKpis` (remover `generalAutomationCost`, renomear/somar custos individuais sem automação).
+- **Tipagem/persistência** (`src/lib/financialSettings.ts`): remover `generalAutomationCost` e `monthlyAutomationCost`.
+- **Banco** (migration): `ALTER TABLE financial_settings DROP COLUMN general_automation_cost`; `ALTER TABLE seller_financial_settings DROP COLUMN monthly_automation_cost`.
 
-- **Índice único parcial**: `(seller_id) WHERE active = true` — garante que um vendedor só está em uma equipe ativa por vez. Na UI, se já existir vínculo ativo com outro gestor, mostrar aviso e exigir confirmação (admin pode forçar; diretor/franqueado é bloqueado).
-- Não substitui `sellers.director_id` — usado em paralelo, sem migrar dados. Futuro: backfill opcional.
+Nenhuma menção a "automação" sobra no módulo.
 
-### 1.2 `financial_settings` — configurações globais (1 linha)
-Campos conforme spec: `average_lifetime_months` (8), `contract_duration_months` (18), `cancellation_rate` (0.10), `general_automation_cost`, `general_tools_cost`, `paid_traffic_cost`, `other_commercial_costs`, `default_enrollment_fee_type` (`fixed`|`percent`), `default_enrollment_fee_value`, `default_school_retention_percentage`, `updated_at`, `updated_by`.
+## 2. Novas tabelas e ajustes de schema
 
-Seed inicial via migration com defaults.
+### 2.1 Nova tabela `team_financial_settings` (LTV editável por escola/franquia)
 
-### 1.3 `seller_financial_settings` — custos por vendedor
-| Campo | Tipo |
+```
+team_financial_settings
+  id uuid pk
+  manager_user_id uuid unique  -- diretor/franqueado dono
+  average_lifetime_months int default 8
+  contract_duration_months int default 18
+  cancellation_rate numeric default 0.10
+  enrollment_fee_type text default 'fixed'   -- 'fixed' | 'percent'
+  enrollment_fee_value numeric default 0
+  school_retention_percentage numeric default 0
+  general_tools_cost numeric default 0
+  paid_traffic_cost numeric default 0
+  other_commercial_costs numeric default 0
+  created_at / updated_at / updated_by
+```
+
+- `financial_settings` (global) continua como **fallback** para staff e quando manager não configurou.
+- Resolução do escopo: ao calcular para um vendedor, busca `team_financial_settings` do `manager_user_id` (via `team_seller_links` ou `sellers.director_id`); se não existir, usa `financial_settings` global.
+
+### 2.2 Ajustes em `seller_financial_settings`
+
+Adicionar:
+- `manager_user_id uuid` (quem cadastrou/é responsável)
+- `monthly_salary numeric default 0`
+- `other_individual_costs numeric default 0`
+
+Remover:
+- `monthly_automation_cost`
+
+Manter: `monthly_tools_cost`, `financial_notes`, `active_for_financial_analysis`.
+
+### 2.3 Ajustes em `financial_settings` (globais)
+
+Remover `general_automation_cost`. Demais campos permanecem como default de rede para staff.
+
+## 3. Onde cada coisa fica salva
+
+| Dado | Tabela |
 |---|---|
-| id | uuid PK |
-| seller_id | uuid UNIQUE → sellers.id |
-| monthly_automation_cost | numeric default 0 |
-| monthly_tools_cost | numeric default 0 |
-| financial_notes | text |
-| active_for_financial_analysis | boolean default true |
-| updated_at, updated_by | |
+| LTV/cancelamento/custos gerais da **escola/franquia** | `team_financial_settings` (por `manager_user_id`) |
+| LTV/cancelamento/custos gerais **globais (rede)** | `financial_settings` (fallback) |
+| Salário e custos individuais do vendedor | `seller_financial_settings` (por `seller_id`) |
+| Vínculo vendedor↔gestor | `team_seller_links` (já existe) |
 
----
+## 4. Permissões (RLS)
 
-## 2. Alterações em tabelas existentes
-
-**Nenhuma.** Tudo complementar. `sellers.director_id` continua existindo e é honrado nas policies como fallback (compatibilidade com `is_director_of`).
-
----
-
-## 3. Funções SQL
-
-### Reaproveitadas (sem alterar)
-`is_staff`, `is_seller_like`, `is_director_like`, `is_director_of`, `has_role`, `current_seller_id`.
-
-### Novas (SECURITY DEFINER, search_path=public)
-- `is_team_manager(_user_id uuid)` → admin/ceo/presidente/diretor/franqueado (qualquer um que possa ter equipe).
-- `manages_seller(_user_id uuid, _seller_id uuid)` → true se existe vínculo ativo em `team_seller_links` **OU** `sellers.director_id = _user_id` (fallback legado).
-- `user_can_access_seller(_seller_id uuid)` → true se: `is_staff(auth.uid())` **OU** `manages_seller(auth.uid(), _seller_id)` **OU** vendedor é o próprio (`current_seller_id() = _seller_id`).
-
-Essas funções alimentam as policies novas e os filtros server-side dos dashboards.
-
----
-
-## 4. RLS / Policies das tabelas novas
-
-### `team_seller_links`
-- SELECT: staff (tudo) · gestor dono (`manager_user_id = auth.uid()`) · vendedor vê só linhas do próprio `seller_id`.
-- INSERT/UPDATE/DELETE: staff (tudo) · gestor dono apenas em linhas onde `manager_user_id = auth.uid()` E `is_director_like(auth.uid()) OR has_role(auth.uid(),'franqueado')`.
-- Vendedor: sem write.
-
-### `financial_settings`
-- SELECT: authenticated (todos leem para alimentar fórmulas).
-- INSERT/UPDATE/DELETE: somente `is_staff(auth.uid())` (admin/ceo/presidente/diretor) — UI esconde edição para diretor/franqueado puros.
+### `team_financial_settings`
+- `SELECT`: `is_staff(auth.uid())` OR `manager_user_id = auth.uid()` OR usuário é vendedor gerenciado por esse manager (via `manages_seller`).
+- `INSERT/UPDATE/DELETE`: `is_staff(auth.uid())` OR (`manager_user_id = auth.uid()` AND (`is_director_like` OR `has_role(..., 'franqueado')`)).
+- Vendedor **não edita**; pode ler somente os campos necessários para seu próprio dashboard (sem ver custos comerciais sensíveis — filtrado na app layer).
 
 ### `seller_financial_settings`
-- SELECT: `user_can_access_seller(seller_id)`.
-- INSERT/UPDATE/DELETE: `is_staff(auth.uid())` · gestor dono via `manages_seller(auth.uid(), seller_id)`.
-- Vendedor: sem write.
+- Manter políticas atuais (`seller_fin_select`, `seller_fin_manager_*`, `seller_fin_staff_all`).
+- App layer **omite `monthly_salary` e `other_individual_costs`** quando o usuário visualizando é o próprio vendedor (não-staff/não-manager).
+- Função SQL helper já existe: `user_can_access_seller(_seller_id)`.
 
-GRANTs explícitos: `SELECT,INSERT,UPDATE,DELETE` para `authenticated`; `ALL` para `service_role`. Sem grant `anon`.
+### Funções helper
+- Reaproveitar `is_staff`, `is_director_like`, `manages_seller`, `user_can_access_seller`.
 
----
+## 5. Edição restrita por equipe
 
-## 5. Como o filtro de equipe se propaga
+- Diretor/franqueado: UI de "Custos por Vendedor" lista apenas `getAccessibleSellerIds()` (já implementado).
+- `team_financial_settings`: cada manager edita apenas a linha onde `manager_user_id = auth.uid()` (garantido por RLS).
+- Admin/CEO/presidente: seletor de equipe para escolher qual `manager_user_id` editar; podem editar qualquer linha.
 
-Toda query de dashboard passa por um helper único `getAccessibleSellerIds()` (client-side, em `src/lib/access.ts`) que:
-1. Carrega `user_roles` do usuário.
-2. Se staff → retorna `null` (sem filtro, tudo).
-3. Se gestor → `select seller_id from team_seller_links where manager_user_id=auth.uid() and active` + união com `sellers where director_id=auth.uid()` (legado).
-4. Se vendedor → `[current_seller_id]`.
+## 6. Vendedor protegido
 
-Usado para filtrar leituras em: ranking, enrollments, interviews, financeiro. **As policies já bloqueiam**; o helper só evita over-fetch e alimenta selects de filtro.
+- `financeiro.vendedor.$sellerId.tsx`: se usuário logado for o próprio vendedor e **não** for staff/manager, esconder `monthly_salary`, `other_individual_costs`, CAC e ROI individuais. Mostrar apenas: matrículas, receita bruta/líquida, MRR, LTV, LTV ajustado, comissão, receita esperada.
+- Lista de equipe e dashboards de outras pessoas: não acessíveis (já filtrado por `getAccessibleSellerIds`).
 
----
-
-## 6. Arquivos a criar / alterar
-
-### Criar
-- `supabase/migrations/<ts>_team_and_financial.sql` — tabelas + funções + policies + seed.
-- `src/lib/access.ts` — `getAccessibleSellerIds`, `useAccessibleSellers` hook.
-- `src/lib/financial.ts` — fórmulas puras (CAC, LTV, MRR, ROI) + tipos.
-- `src/lib/teamLinks.ts` — CRUD de `team_seller_links`.
-- `src/lib/financialSettings.ts` — CRUD de `financial_settings` e `seller_financial_settings`.
-- `src/routes/equipe.tsx` — aba "Minha Equipe / Equipe da Franquia" (gestor) ou "Equipes" (staff).
-- `src/routes/financeiro.tsx` — layout do módulo com sub-tabs.
-- `src/routes/financeiro.geral.tsx` — dashboard rede/equipe (escopo automático por papel).
-- `src/routes/financeiro.vendedor.$sellerId.tsx` — drill-down por vendedor.
-- `src/routes/financeiro.equipes.tsx` — comparativo por equipe (staff e gestor).
-- `src/routes/financeiro.config.tsx` — configurações globais + por vendedor.
-- `src/components/financial/*` — cards de KPI, tabelas, gráfico mensal (recharts já instalado).
-- `src/components/TeamManager.tsx` — seletor de vendedores com aviso de vínculo existente.
-
-### Alterar (mínimo)
-- `src/routes/__root.tsx` — adicionar links "Equipe" e "Financeiro" no menu, condicionados ao papel.
-- `src/components/RankingView.tsx` — aplicar `getAccessibleSellerIds()` ao `fetchSellers` para gestores (já funciona para staff e vendedor; só adiciona o filtro de gestor). **Não muda lógica de pontuação nem ordem.**
-- `src/lib/enrollments.ts` — opcional: aceitar `sellerIds?: string[]` em `fetchEnrollments` para o financeiro filtrar por equipe sem N+1.
-
-### Não tocar
-`enrollments_apply_commission`, `enforce_enrollment_status_*`, `enforce_seller_update_scope`, `enforce_interview_update_scope`, `handle_new_user_signup`, `claim_seller_profile`, views agregadas, `EnrollmentFormDialog`, fluxo de aprovação.
-
----
-
-## 7. Fórmulas (em `src/lib/financial.ts`, puras, testáveis)
-
-Base: `enrollments.status='approved'` no período.
+## 7. Recálculo de CAC e ROI com salários
 
 ```
-commission        = e.commission_amount ?? e.enrollment_value * e.commission_rate
-matriculaLiquida  = e.enrollment_value - commission - taxaMatricula(settings)
-mrrNovo           = Σ e.monthly_fee
-ltv               = e.monthly_fee * settings.average_lifetime_months
-ltvAjustado       = ltv * (1 - settings.cancellation_rate)
-receitaEsperada   = matriculaLiquida + ltvAjustado
-custoVendedor     = sfs.monthly_automation_cost + sfs.monthly_tools_cost
-custoGlobal       = Σ(general_automation, general_tools, paid_traffic, other) + Σ custoVendedor
-CAC               = custoGlobal / nMatriculasAprovadas        // null se 0
-ROIvendedor       = receitaEsperadaVendedor / custoVendedor   // "sem custo" se custo=0
+custo_individual_vendedor = monthly_salary + monthly_tools_cost + other_individual_costs
+custo_total_equipe = Σ custo_individual + general_tools_cost + paid_traffic_cost + other_commercial_costs
+CAC = custo_total_equipe / nº matrículas aprovadas no período
+ROI_vendedor = receita_esperada_vendedor / custo_individual_vendedor
+ROI_equipe   = receita_esperada_equipe   / custo_total_equipe
 ```
 
-Escopo (rede / equipe / vendedor) muda apenas o conjunto de `enrollments` e o conjunto de `seller_financial_settings` somados — fórmula é a mesma.
+- Quando `custo_total == 0` ou não há custos cadastrados → exibir aviso **"Cadastre salários e custos para calcular CAC e ROI"** em vez de `R$ 0,00` / `0x`.
+- Os settings usados em `computeScopeKpis` passam a vir de `team_financial_settings` do manager do escopo (com fallback global).
+
+## 8. Filtros do Financeiro
+
+Topo do `/financeiro/*`: período (mês), equipe/franquia (staff vê todas), vendedor, cargo. Para diretor/franqueado o seletor de equipe é fixado na própria.
+
+## 9. Preservação do ranking
+
+- **Nenhuma alteração** em `sellers`, `enrollments`, `interviews`, triggers de score, `RankingView.tsx` (já filtra por `getAccessibleSellerIds`), nem em comissões.
+- Só são tocadas: `financial_settings` (drop coluna), `seller_financial_settings` (drop+add colunas) e nova `team_financial_settings`.
+- Cálculos financeiros leem dados existentes; não escrevem em `enrollments`/`sellers`.
+
+## 10. Arquivos afetados
+
+- **Migration nova**: drop colunas de automação + add `monthly_salary`/`other_individual_costs`/`manager_user_id` em `seller_financial_settings` + criar `team_financial_settings` com GRANTs e RLS.
+- **Edit** `src/lib/financialSettings.ts`: remover automação, adicionar salário/outros custos, novo módulo `teamFinancialSettings.ts`.
+- **Edit** `src/lib/financial.ts`: nova fórmula de custo individual, remoção de automação, suporte a settings por equipe.
+- **Edit** `src/routes/financeiro.config.tsx`: separar em duas seções — "Configurações da minha equipe/franquia" (team) e "Custos por vendedor" (com salário). Staff ganha seletor de manager.
+- **Edit** `financeiro.geral.tsx`, `financeiro.equipes.tsx`, `financeiro.vendedor.$sellerId.tsx`: novos cards, remoção de automação, aviso quando custos zerados, ocultação de salário para vendedor.
+- **Edit** `src/components/financial/KpiCard.tsx`: suporte a hint/fórmula e estado "sem dados".
+
+## 11. O que NÃO muda
+
+- Ranking, score, triggers, comissões em `enrollments`, autenticação, gestão de equipe (`/equipe`), navegação principal.
 
 ---
 
-## 8. Escopo por papel (resumo)
-
-| Papel | Equipe (CRUD) | Financeiro geral | Vendedor drill | Config global | Config vendedor |
-|---|---|---|---|---|---|
-| admin / ceo / presidente | tudo | rede + filtros | qualquer | editar | editar |
-| diretor (staff) | tudo | rede + filtros | qualquer | editar | editar |
-| franqueado | só própria | só própria equipe | só da equipe | ver | editar da equipe |
-| vendedor | — | só próprio | só próprio | — | — |
-
-Obs.: hoje `is_staff` inclui `diretor`. Para diferenciar "diretor-staff" de "franqueado-gestor", a UI usa: staff = `is_staff`; gestor = `is_director_like OR has_role('franqueado')`.
-
----
-
-## 9. Impacto no ranking
-
-Zero alteração de lógica. O `RankingView` recebe um filtro de `sellerIds` quando o usuário é gestor (já era o caso para vendedor). Ordenação, pesos, score, função `rankSellers` — intactos. Para staff o comportamento é idêntico ao atual.
-
----
-
-## 10. Entrega incremental (após aprovação)
-
-1. Migration (tabelas + funções + policies + seed).
-2. `access.ts` + `teamLinks.ts` + rota `/equipe` (UI de vínculo + aviso de conflito).
-3. Aplicar `getAccessibleSellerIds` ao ranking (sem mudar visual).
-4. `financialSettings.ts` + rota `/financeiro/config`.
-5. `financial.ts` + `/financeiro/geral` (KPIs + gráfico mensal).
-6. `/financeiro/equipes` + `/financeiro/vendedor/$id`.
-7. Filtros globais (período, vendedor, equipe, status, cargo) num componente compartilhado.
-
-Sem mocks, sem localStorage para dados de negócio, sem edge functions — tudo via Supabase client + RLS.
-
----
-
-Confirma este plano para eu seguir com a migration?
+Aguardando aprovação para implementar.

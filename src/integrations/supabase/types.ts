@@ -166,7 +166,6 @@ export type Database = {
           default_enrollment_fee_type: string
           default_enrollment_fee_value: number
           default_school_retention_percentage: number
-          general_automation_cost: number
           general_tools_cost: number
           id: string
           other_commercial_costs: number
@@ -182,7 +181,6 @@ export type Database = {
           default_enrollment_fee_type?: string
           default_enrollment_fee_value?: number
           default_school_retention_percentage?: number
-          general_automation_cost?: number
           general_tools_cost?: number
           id?: string
           other_commercial_costs?: number
@@ -198,7 +196,6 @@ export type Database = {
           default_enrollment_fee_type?: string
           default_enrollment_fee_value?: number
           default_school_retention_percentage?: number
-          general_automation_cost?: number
           general_tools_cost?: number
           id?: string
           other_commercial_costs?: number
@@ -282,8 +279,10 @@ export type Database = {
           created_at: string
           financial_notes: string | null
           id: string
-          monthly_automation_cost: number
+          manager_user_id: string | null
+          monthly_salary: number
           monthly_tools_cost: number
+          other_individual_costs: number
           seller_id: string
           updated_at: string
           updated_by: string | null
@@ -293,8 +292,10 @@ export type Database = {
           created_at?: string
           financial_notes?: string | null
           id?: string
-          monthly_automation_cost?: number
+          manager_user_id?: string | null
+          monthly_salary?: number
           monthly_tools_cost?: number
+          other_individual_costs?: number
           seller_id: string
           updated_at?: string
           updated_by?: string | null
@@ -304,8 +305,10 @@ export type Database = {
           created_at?: string
           financial_notes?: string | null
           id?: string
-          monthly_automation_cost?: number
+          manager_user_id?: string | null
+          monthly_salary?: number
           monthly_tools_cost?: number
+          other_individual_costs?: number
           seller_id?: string
           updated_at?: string
           updated_by?: string | null
@@ -407,6 +410,57 @@ export type Database = {
           week_completed?: number
           week_enrollments?: number
           week_scheduled?: number
+        }
+        Relationships: []
+      }
+      team_financial_settings: {
+        Row: {
+          average_lifetime_months: number
+          cancellation_rate: number
+          contract_duration_months: number
+          created_at: string
+          enrollment_fee_type: string
+          enrollment_fee_value: number
+          general_tools_cost: number
+          id: string
+          manager_user_id: string
+          other_commercial_costs: number
+          paid_traffic_cost: number
+          school_retention_percentage: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          average_lifetime_months?: number
+          cancellation_rate?: number
+          contract_duration_months?: number
+          created_at?: string
+          enrollment_fee_type?: string
+          enrollment_fee_value?: number
+          general_tools_cost?: number
+          id?: string
+          manager_user_id: string
+          other_commercial_costs?: number
+          paid_traffic_cost?: number
+          school_retention_percentage?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          average_lifetime_months?: number
+          cancellation_rate?: number
+          contract_duration_months?: number
+          created_at?: string
+          enrollment_fee_type?: string
+          enrollment_fee_value?: number
+          general_tools_cost?: number
+          id?: string
+          manager_user_id?: string
+          other_commercial_costs?: number
+          paid_traffic_cost?: number
+          school_retention_percentage?: number
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
