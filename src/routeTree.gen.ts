@@ -24,6 +24,10 @@ import { Route as AgendaEquipeRouteImport } from './routes/agenda-equipe'
 import { Route as AcessosRouteImport } from './routes/acessos'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VendedorSellerIdRouteImport } from './routes/vendedor.$sellerId'
+import { Route as FinanceiroGeralRouteImport } from './routes/financeiro.geral'
+import { Route as FinanceiroEquipesRouteImport } from './routes/financeiro.equipes'
+import { Route as FinanceiroConfigRouteImport } from './routes/financeiro.config'
+import { Route as FinanceiroVendedorSellerIdRouteImport } from './routes/financeiro.vendedor.$sellerId'
 
 const RankingRoute = RankingRouteImport.update({
   id: '/ranking',
@@ -100,6 +104,27 @@ const VendedorSellerIdRoute = VendedorSellerIdRouteImport.update({
   path: '/vendedor/$sellerId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FinanceiroGeralRoute = FinanceiroGeralRouteImport.update({
+  id: '/geral',
+  path: '/geral',
+  getParentRoute: () => FinanceiroRoute,
+} as any)
+const FinanceiroEquipesRoute = FinanceiroEquipesRouteImport.update({
+  id: '/equipes',
+  path: '/equipes',
+  getParentRoute: () => FinanceiroRoute,
+} as any)
+const FinanceiroConfigRoute = FinanceiroConfigRouteImport.update({
+  id: '/config',
+  path: '/config',
+  getParentRoute: () => FinanceiroRoute,
+} as any)
+const FinanceiroVendedorSellerIdRoute =
+  FinanceiroVendedorSellerIdRouteImport.update({
+    id: '/vendedor/$sellerId',
+    path: '/vendedor/$sellerId',
+    getParentRoute: () => FinanceiroRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -109,14 +134,18 @@ export interface FileRoutesByFullPath {
   '/comissoes-equipe': typeof ComissoesEquipeRoute
   '/equipe': typeof EquipeRoute
   '/fanaticos': typeof FanaticosRoute
-  '/financeiro': typeof FinanceiroRoute
+  '/financeiro': typeof FinanceiroRouteWithChildren
   '/login': typeof LoginRoute
   '/marca': typeof MarcaRoute
   '/minha-programacao': typeof MinhaProgramacaoRoute
   '/minhas-comissoes': typeof MinhasComissoesRoute
   '/perfil': typeof PerfilRoute
   '/ranking': typeof RankingRoute
+  '/financeiro/config': typeof FinanceiroConfigRoute
+  '/financeiro/equipes': typeof FinanceiroEquipesRoute
+  '/financeiro/geral': typeof FinanceiroGeralRoute
   '/vendedor/$sellerId': typeof VendedorSellerIdRoute
+  '/financeiro/vendedor/$sellerId': typeof FinanceiroVendedorSellerIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -126,14 +155,18 @@ export interface FileRoutesByTo {
   '/comissoes-equipe': typeof ComissoesEquipeRoute
   '/equipe': typeof EquipeRoute
   '/fanaticos': typeof FanaticosRoute
-  '/financeiro': typeof FinanceiroRoute
+  '/financeiro': typeof FinanceiroRouteWithChildren
   '/login': typeof LoginRoute
   '/marca': typeof MarcaRoute
   '/minha-programacao': typeof MinhaProgramacaoRoute
   '/minhas-comissoes': typeof MinhasComissoesRoute
   '/perfil': typeof PerfilRoute
   '/ranking': typeof RankingRoute
+  '/financeiro/config': typeof FinanceiroConfigRoute
+  '/financeiro/equipes': typeof FinanceiroEquipesRoute
+  '/financeiro/geral': typeof FinanceiroGeralRoute
   '/vendedor/$sellerId': typeof VendedorSellerIdRoute
+  '/financeiro/vendedor/$sellerId': typeof FinanceiroVendedorSellerIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -144,14 +177,18 @@ export interface FileRoutesById {
   '/comissoes-equipe': typeof ComissoesEquipeRoute
   '/equipe': typeof EquipeRoute
   '/fanaticos': typeof FanaticosRoute
-  '/financeiro': typeof FinanceiroRoute
+  '/financeiro': typeof FinanceiroRouteWithChildren
   '/login': typeof LoginRoute
   '/marca': typeof MarcaRoute
   '/minha-programacao': typeof MinhaProgramacaoRoute
   '/minhas-comissoes': typeof MinhasComissoesRoute
   '/perfil': typeof PerfilRoute
   '/ranking': typeof RankingRoute
+  '/financeiro/config': typeof FinanceiroConfigRoute
+  '/financeiro/equipes': typeof FinanceiroEquipesRoute
+  '/financeiro/geral': typeof FinanceiroGeralRoute
   '/vendedor/$sellerId': typeof VendedorSellerIdRoute
+  '/financeiro/vendedor/$sellerId': typeof FinanceiroVendedorSellerIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -170,7 +207,11 @@ export interface FileRouteTypes {
     | '/minhas-comissoes'
     | '/perfil'
     | '/ranking'
+    | '/financeiro/config'
+    | '/financeiro/equipes'
+    | '/financeiro/geral'
     | '/vendedor/$sellerId'
+    | '/financeiro/vendedor/$sellerId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -187,7 +228,11 @@ export interface FileRouteTypes {
     | '/minhas-comissoes'
     | '/perfil'
     | '/ranking'
+    | '/financeiro/config'
+    | '/financeiro/equipes'
+    | '/financeiro/geral'
     | '/vendedor/$sellerId'
+    | '/financeiro/vendedor/$sellerId'
   id:
     | '__root__'
     | '/'
@@ -204,7 +249,11 @@ export interface FileRouteTypes {
     | '/minhas-comissoes'
     | '/perfil'
     | '/ranking'
+    | '/financeiro/config'
+    | '/financeiro/equipes'
+    | '/financeiro/geral'
     | '/vendedor/$sellerId'
+    | '/financeiro/vendedor/$sellerId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -215,7 +264,7 @@ export interface RootRouteChildren {
   ComissoesEquipeRoute: typeof ComissoesEquipeRoute
   EquipeRoute: typeof EquipeRoute
   FanaticosRoute: typeof FanaticosRoute
-  FinanceiroRoute: typeof FinanceiroRoute
+  FinanceiroRoute: typeof FinanceiroRouteWithChildren
   LoginRoute: typeof LoginRoute
   MarcaRoute: typeof MarcaRoute
   MinhaProgramacaoRoute: typeof MinhaProgramacaoRoute
@@ -332,8 +381,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VendedorSellerIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/financeiro/geral': {
+      id: '/financeiro/geral'
+      path: '/geral'
+      fullPath: '/financeiro/geral'
+      preLoaderRoute: typeof FinanceiroGeralRouteImport
+      parentRoute: typeof FinanceiroRoute
+    }
+    '/financeiro/equipes': {
+      id: '/financeiro/equipes'
+      path: '/equipes'
+      fullPath: '/financeiro/equipes'
+      preLoaderRoute: typeof FinanceiroEquipesRouteImport
+      parentRoute: typeof FinanceiroRoute
+    }
+    '/financeiro/config': {
+      id: '/financeiro/config'
+      path: '/config'
+      fullPath: '/financeiro/config'
+      preLoaderRoute: typeof FinanceiroConfigRouteImport
+      parentRoute: typeof FinanceiroRoute
+    }
+    '/financeiro/vendedor/$sellerId': {
+      id: '/financeiro/vendedor/$sellerId'
+      path: '/vendedor/$sellerId'
+      fullPath: '/financeiro/vendedor/$sellerId'
+      preLoaderRoute: typeof FinanceiroVendedorSellerIdRouteImport
+      parentRoute: typeof FinanceiroRoute
+    }
   }
 }
+
+interface FinanceiroRouteChildren {
+  FinanceiroConfigRoute: typeof FinanceiroConfigRoute
+  FinanceiroEquipesRoute: typeof FinanceiroEquipesRoute
+  FinanceiroGeralRoute: typeof FinanceiroGeralRoute
+  FinanceiroVendedorSellerIdRoute: typeof FinanceiroVendedorSellerIdRoute
+}
+
+const FinanceiroRouteChildren: FinanceiroRouteChildren = {
+  FinanceiroConfigRoute: FinanceiroConfigRoute,
+  FinanceiroEquipesRoute: FinanceiroEquipesRoute,
+  FinanceiroGeralRoute: FinanceiroGeralRoute,
+  FinanceiroVendedorSellerIdRoute: FinanceiroVendedorSellerIdRoute,
+}
+
+const FinanceiroRouteWithChildren = FinanceiroRoute._addFileChildren(
+  FinanceiroRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -343,7 +438,7 @@ const rootRouteChildren: RootRouteChildren = {
   ComissoesEquipeRoute: ComissoesEquipeRoute,
   EquipeRoute: EquipeRoute,
   FanaticosRoute: FanaticosRoute,
-  FinanceiroRoute: FinanceiroRoute,
+  FinanceiroRoute: FinanceiroRouteWithChildren,
   LoginRoute: LoginRoute,
   MarcaRoute: MarcaRoute,
   MinhaProgramacaoRoute: MinhaProgramacaoRoute,
@@ -355,3 +450,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
