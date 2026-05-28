@@ -318,9 +318,11 @@ export function RankingView() {
               <Link to="/equipe" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
                 Equipes
               </Link>
-              <Link to="/financeiro" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
-                Financeiro
-              </Link>
+              {(isAdmin || role === "diretor") && (
+                <Link to="/financeiro" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
+                  Financeiro
+                </Link>
+              )}
               {isAdmin && (
                 <Link to="/marca" className="flex items-center gap-1 px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
                   <Palette className="size-3.5" /> Marca
