@@ -10,6 +10,8 @@ export type CurrentUser = {
   role: Role;
   isStaff: boolean;
   isDirectorLike: boolean;
+  isFranchisee: boolean;
+  isManager: boolean;
   sellerId: string | null;
 };
 
@@ -21,6 +23,8 @@ export function useCurrentUser(): CurrentUser {
     role: null,
     isStaff: false,
     isDirectorLike: false,
+    isFranchisee: false,
+    isManager: false,
     sellerId: null,
   });
 
@@ -37,6 +41,8 @@ export function useCurrentUser(): CurrentUser {
             role: null,
             isStaff: false,
             isDirectorLike: false,
+            isFranchisee: false,
+            isManager: false,
             sellerId: null,
           });
         return;
@@ -58,19 +64,22 @@ export function useCurrentUser(): CurrentUser {
               : roles.includes("vendedor") || roles.includes("franqueado")
                 ? "vendedor"
                 : null;
+      const isStaff =
+        role === "admin" || role === "diretor" || role === "ceo" || role === "presidente";
+      const isDirectorLike =
+        role === "diretor" || role === "ceo" || role === "presidente";
+      const isFranchisee = roles.includes("franqueado");
+      const isManager = isDirectorLike || isFranchisee || role === "admin";
       if (mounted)
         setState({
           loading: false,
           userId: uid,
           email,
           role,
-          isStaff:
-            role === "admin" ||
-            role === "diretor" ||
-            role === "ceo" ||
-            role === "presidente",
-          isDirectorLike:
-            role === "diretor" || role === "ceo" || role === "presidente",
+          isStaff,
+          isDirectorLike,
+          isFranchisee,
+          isManager,
           sellerId: sellerRes.data?.id ?? null,
         });
     };
