@@ -315,9 +315,11 @@ export function RankingView() {
               <Link to="/agenda-equipe" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
                 Agenda da Equipe
               </Link>
-              <Link to="/equipe" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
-                Equipes
-              </Link>
+              {(isAdmin || role === "ceo") && (
+                <Link to="/equipe" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
+                  Equipes
+                </Link>
+              )}
               {(isAdmin || role === "ceo" || role === "presidente" || role === "diretor") && (
                 <Link to="/financeiro" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
                   Financeiro
@@ -340,9 +342,6 @@ export function RankingView() {
           )}
           {!isStaff && isManager && (
             <>
-              <Link to="/equipe" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
-                Minha Equipe
-              </Link>
               <Link to="/financeiro" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
                 Financeiro
               </Link>
