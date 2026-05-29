@@ -28,7 +28,8 @@ type SellerLite = { id: string; name: string; role: SellerRole; user_id: string 
 type ManagerLite = { user_id: string; name: string; email: string; app_role: string };
 
 function EquipePage() {
-  const { loading, userId, isStaff, isManager, isFranchisee, role } = useCurrentUser();
+  const { loading, userId, isStaff, isFranchisee, role } = useCurrentUser();
+  const canManageTeams = role === "admin" || role === "ceo";
   const navigate = useNavigate();
 
   const [sellers, setSellers] = useState<SellerLite[]>([]);
@@ -183,13 +184,13 @@ function EquipePage() {
     );
   }
 
-  if (!isManager) {
+  if (!canManageTeams) {
     return (
       <main className="min-h-screen px-4 md:px-8 py-8 max-w-3xl mx-auto">
         <h1 className="text-2xl font-display font-bold mb-2">Acesso restrito</h1>
         <p className="text-sm text-muted-foreground">
-          Apenas administradores, CEO, presidente, diretores e franqueados podem gerenciar
-          equipes.
+          Apenas administradores e CEO podem definir quais vendedores fazem parte da
+          equipe de cada franqueado/diretor.
         </p>
         <Link
           to="/"
