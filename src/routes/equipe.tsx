@@ -25,6 +25,8 @@ export const Route = createFileRoute("/equipe")({
 
 type SellerLite = { id: string; name: string; role: SellerRole; user_id: string | null };
 
+type ManagerLite = { user_id: string; name: string; email: string; app_role: string };
+
 function EquipePage() {
   const { loading, userId, isStaff, isManager, isFranchisee, role } = useCurrentUser();
   const navigate = useNavigate();
@@ -33,10 +35,53 @@ function EquipePage() {
   const [links, setLinks] = useState<TeamLink[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [managers, setManagers] = useState<ManagerLite[]>([]);
+  const [activeManagerId, setActiveManagerId] = useState<string | null>(null);
+
+  // Gestor "ativo" para operações: admin pode escolher; demais usam o próprio id.
+  const effectiveManagerId = isStaff ? activeManagerId : userId;
 
   useEffect(() => {
     if (!loading && !userId) navigate({ to: "/login" });
   }, [loading, userId, navigate]);
+
+  // Inicializa activeManagerId quando staff
+  useEffect(() => {
+    if (isStaff && userId && activeManagerId === null) {
+      setActiveManagerId(userId);
+    }
+  }, [isStaff, userId, activeManagerId]);
+
+  // Carrega lista de gestores (admins veem todos os franqueados/diretores/ceo)
+  useEffect(() => {
+    if (!isStaff) return;
+    let mounted = true;
+    supabase
+      .from("allowed_emails")
+      .select("used_by,name,email,app_role")
+      .not("used_by", "is", null)
+      .in("app_role", ["franqueado", "diretor", "ceo", "presidente", "admin"])
+      .order("name")
+      .then(({ data, error }) => {
+        if (!mounted) return;
+        if (error) {
+          setError(error.message);
+          return;
+        }
+        const rows = (data ?? [])
+          .filter((r) => r.used_by)
+          .map((r) => ({
+            user_id: r.used_by as string,
+            name: r.name as string,
+            email: r.email as string,
+            app_role: r.app_role as string,
+          }));
+        setManagers(rows);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [isStaff]);
 
   useEffect(() => {
     if (!userId) return;
@@ -66,8 +111,8 @@ function EquipePage() {
   };
 
   const myLinks = useMemo(
-    () => links.filter((l) => l.managerUserId === userId),
-    [links, userId],
+    () => links.filter((l) => l.managerUserId === effectiveManagerId),
+    [links, effectiveManagerId],
   );
   const linksBySeller = useMemo(() => {
     const m = new Map<string, TeamLink>();
@@ -78,10 +123,10 @@ function EquipePage() {
   const myTeamIds = new Set(myLinks.map((l) => l.sellerId));
 
   const handleAdd = async (sellerId: string) => {
-    if (!userId) return;
+    if (!effectiveManagerId) return;
     setError(null);
     const existing = linksBySeller.get(sellerId);
-    if (existing && existing.managerUserId !== userId) {
+    if (existing && existing.managerUserId !== effectiveManagerId) {
       if (!isStaff) {
         setError(
           "Este vendedor já pertence à equipe de outro gestor. Peça ao admin/CEO para liberar.",
@@ -97,7 +142,7 @@ function EquipePage() {
       setBusy(true);
       try {
         await deactivateActiveLinkForSeller(sellerId);
-        await addSellerToTeam(userId, sellerId);
+        await addSellerToTeam(effectiveManagerId, sellerId);
         await reloadLinks();
       } catch (e) {
         setError((e as Error).message);
@@ -108,7 +153,7 @@ function EquipePage() {
     }
     setBusy(true);
     try {
-      await addSellerToTeam(userId, sellerId);
+      await addSellerToTeam(effectiveManagerId, sellerId);
       await reloadLinks();
     } catch (e) {
       setError((e as Error).message);
@@ -158,6 +203,12 @@ function EquipePage() {
 
   const myTeam = sellers.filter((s) => myTeamIds.has(s.id));
   const available = sellers.filter((s) => !myTeamIds.has(s.id));
+  const activeManager = managers.find((m) => m.user_id === effectiveManagerId);
+  const teamLabel = isStaff
+    ? activeManager
+      ? `Equipe de ${activeManager.name}`
+      : "Equipe selecionada"
+    : "Vinculados a mim";
 
   return (
     <main className="min-h-screen px-4 md:px-8 py-8 max-w-5xl mx-auto">
@@ -188,9 +239,38 @@ function EquipePage() {
         </div>
       )}
 
+      {isStaff && (
+        <section className="mb-6 rounded-xl border border-border bg-card px-4 py-3">
+          <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2 font-semibold">
+            Gerenciar equipe de
+          </label>
+          <select
+            value={effectiveManagerId ?? ""}
+            onChange={(e) => setActiveManagerId(e.target.value)}
+            className="w-full md:w-96 rounded-lg border border-border bg-background px-3 py-2 text-sm"
+          >
+            {userId && (
+              <option value={userId}>
+                Eu mesmo ({role})
+              </option>
+            )}
+            {managers
+              .filter((m) => m.user_id !== userId)
+              .map((m) => (
+                <option key={m.user_id} value={m.user_id}>
+                  {m.name} — {m.app_role}
+                </option>
+              ))}
+          </select>
+          <p className="text-[11px] text-muted-foreground mt-2">
+            Defina quais vendedores este gestor pode ver e editar no Financeiro.
+          </p>
+        </section>
+      )}
+
       <section className="mb-8">
         <h2 className="font-display font-bold text-lg mb-3">
-          Vinculados a mim ({myTeam.length})
+          {teamLabel} ({myTeam.length})
         </h2>
         {myTeam.length === 0 ? (
           <p className="text-sm text-muted-foreground">

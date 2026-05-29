@@ -318,7 +318,7 @@ export function RankingView() {
               <Link to="/equipe" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
                 Equipes
               </Link>
-              {(isAdmin || role === "diretor") && (
+              {(isAdmin || role === "ceo" || role === "presidente" || role === "diretor") && (
                 <Link to="/financeiro" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
                   Financeiro
                 </Link>
