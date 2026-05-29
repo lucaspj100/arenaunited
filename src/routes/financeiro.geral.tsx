@@ -99,6 +99,12 @@ function GeralPage() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           <KpiCard label="Matrículas aprovadas" value={kpis.enrollmentsApproved} format="int" tone="primary" hint="Status = aprovada no período." />
           <KpiCard label="Receita bruta" value={kpis.grossEnrollmentRevenue} hint="Soma de enrollment_value." />
+          <KpiCard
+            label="VGV geral"
+            value={kpis.vgvTotal}
+            tone="primary"
+            hint={`Matrícula + mensalidade × ${settings!.contractDurationMonths} meses (duração padrão do contrato).`}
+          />
           <KpiCard label="Receita líquida" value={kpis.netEnrollmentRevenue} tone="success" hint="Bruta − comissão − taxa de matrícula." />
           <KpiCard label="MRR novo" value={kpis.newMRR} tone="success" hint="Soma das mensalidades aprovadas no período." />
           <KpiCard label="LTV total" value={kpis.totalLTV} hint={`Mensalidade × ${settings!.averageLifetimeMonths} meses.`} />

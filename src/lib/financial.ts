@@ -43,6 +43,7 @@ export type FinancialScopeKpis = {
   totalLTVAdjusted: number;
   totalCommission: number;
   totalExpectedRevenue: number;
+  vgvTotal: number;
 
   salariesTotal: number;
   generalToolsCost: number;
@@ -72,7 +73,8 @@ export function computeScopeKpis(
     ltvSum = 0,
     ltvAdj = 0,
     commission = 0,
-    expected = 0;
+    expected = 0,
+    vgv = 0;
 
   for (const e of enrollments) {
     gross += e.enrollmentValue;
@@ -82,6 +84,7 @@ export function computeScopeKpis(
     ltvAdj += ltvAdjusted(e, settings);
     commission += commissionOf(e);
     expected += expectedRevenue(e, settings);
+    vgv += e.enrollmentValue + e.monthlyFee * settings.contractDurationMonths;
   }
 
   const salariesTotal = sellerCosts.reduce(
@@ -116,6 +119,7 @@ export function computeScopeKpis(
     totalLTVAdjusted: round2(ltvAdj),
     totalCommission: round2(commission),
     totalExpectedRevenue: round2(expected),
+    vgvTotal: round2(vgv),
     salariesTotal: round2(salariesTotal),
     generalToolsCost: round2(generalToolsCost),
     paidTrafficCost: round2(paidTrafficCost),

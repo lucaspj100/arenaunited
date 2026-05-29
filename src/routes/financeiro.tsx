@@ -16,7 +16,13 @@ export const Route = createFileRoute("/financeiro")({
 function FinanceiroLayout() {
   const { loading, userId, role, isFranchisee } = useCurrentUser();
   const allowed =
-    role === "admin" || role === "diretor" || isFranchisee;
+    role === "admin" ||
+    role === "ceo" ||
+    role === "presidente" ||
+    role === "diretor" ||
+    isFranchisee;
+  const canSeeGeneral =
+    role === "admin" || role === "ceo" || role === "presidente";
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -24,12 +30,22 @@ function FinanceiroLayout() {
     if (!loading && !userId) navigate({ to: "/login" });
   }, [loading, userId, navigate]);
 
-  // Redireciona /financeiro -> /financeiro/geral
+  // Redireciona /financeiro -> destino conforme permissão
   useEffect(() => {
     if (location.pathname === "/financeiro") {
-      navigate({ to: "/financeiro/geral", replace: true });
+      navigate({
+        to: canSeeGeneral ? "/financeiro/geral" : "/financeiro/equipes",
+        replace: true,
+      });
     }
-  }, [location.pathname, navigate]);
+  }, [location.pathname, navigate, canSeeGeneral]);
+
+  // Bloqueia acesso direto a /financeiro/geral para quem não pode
+  useEffect(() => {
+    if (!canSeeGeneral && location.pathname === "/financeiro/geral") {
+      navigate({ to: "/financeiro/equipes", replace: true });
+    }
+  }, [canSeeGeneral, location.pathname, navigate]);
 
   if (loading) {
     return (
@@ -44,7 +60,7 @@ function FinanceiroLayout() {
       <main className="min-h-screen px-4 md:px-8 py-8 max-w-3xl mx-auto">
         <h1 className="text-2xl font-display font-bold mb-2">Acesso restrito</h1>
         <p className="text-sm text-muted-foreground">
-          O módulo financeiro é restrito a admin, diretores e franqueados.
+          O módulo financeiro é restrito a admin, CEO, diretores e franqueados.
         </p>
         <Link
           to="/"
@@ -77,7 +93,7 @@ function FinanceiroLayout() {
       </header>
 
       <nav className="flex flex-wrap gap-2 mb-6 border-b border-border pb-3">
-        <TabLink to="/financeiro/geral" label="Geral" />
+        {canSeeGeneral && <TabLink to="/financeiro/geral" label="Geral" />}
         <TabLink to="/financeiro/equipes" label="Por equipe" />
         <TabLink to="/financeiro/config" label="Configurações" />
       </nav>
