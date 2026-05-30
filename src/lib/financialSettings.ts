@@ -85,6 +85,10 @@ export type TeamFinancialSettings = {
   generalToolsCost: number;
   paidTrafficCost: number;
   otherCommercialCosts: number;
+  headquartersPercentage: number;
+  consultantCommissionPercentage: number;
+  managerCommissionPercentage: number;
+  cardFeePercentage: number;
 };
 
 export async function fetchTeamFinancialSettings(
@@ -109,6 +113,10 @@ export async function fetchTeamFinancialSettings(
     generalToolsCost: Number(data.general_tools_cost),
     paidTrafficCost: Number(data.paid_traffic_cost),
     otherCommercialCosts: Number(data.other_commercial_costs),
+    headquartersPercentage: Number(data.headquarters_percentage ?? 0),
+    consultantCommissionPercentage: Number(data.consultant_commission_percentage ?? 0),
+    managerCommissionPercentage: Number(data.manager_commission_percentage ?? 0),
+    cardFeePercentage: Number(data.card_fee_percentage ?? 0),
   };
 }
 
@@ -130,6 +138,10 @@ export async function upsertTeamFinancialSettings(
         general_tools_cost: patch.generalToolsCost,
         paid_traffic_cost: patch.paidTrafficCost,
         other_commercial_costs: patch.otherCommercialCosts,
+        headquarters_percentage: patch.headquartersPercentage,
+        consultant_commission_percentage: patch.consultantCommissionPercentage,
+        manager_commission_percentage: patch.managerCommissionPercentage,
+        card_fee_percentage: patch.cardFeePercentage,
       },
       { onConflict: "manager_user_id" },
     );

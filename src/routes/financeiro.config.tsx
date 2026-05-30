@@ -34,6 +34,10 @@ const EMPTY_TEAM = (uid: string): TeamFinancialSettings => ({
   generalToolsCost: 0,
   paidTrafficCost: 0,
   otherCommercialCosts: 0,
+  headquartersPercentage: 0,
+  consultantCommissionPercentage: 0,
+  managerCommissionPercentage: 0,
+  cardFeePercentage: 0,
 });
 
 const emptyCost = (sellerId: string): SellerFinancialSettings => ({
@@ -151,68 +155,72 @@ function ConfigPage() {
             Configurações da minha escola/franquia
           </h2>
           <p className="text-xs text-muted-foreground mb-3">
-            Esses valores valem só para a sua equipe. CAC, LTV e ROI da sua
-            escola são calculados com base neles.
+            Defina os percentuais e custos que compõem o cálculo do valor
+            líquido de cada matrícula. Cada escola pode ter seus próprios
+            valores. Use percentuais entre 0 e 100.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            <NumberField
-              label="LTV — tempo médio de permanência (meses)"
-              value={team.averageLifetimeMonths}
-              onChange={(v) => setTeam({ ...team, averageLifetimeMonths: v })}
-            />
-            <NumberField
-              label="Duração do contrato (meses)"
-              value={team.contractDurationMonths}
-              onChange={(v) => setTeam({ ...team, contractDurationMonths: v })}
-            />
-            <NumberField
-              label="Taxa de cancelamento (0–1)"
-              step={0.01}
-              value={team.cancellationRate}
-              onChange={(v) => setTeam({ ...team, cancellationRate: v })}
-            />
-            <SelectField
-              label="Tipo de taxa de matrícula"
-              value={team.enrollmentFeeType}
-              options={[
-                { value: "fixed", label: "Fixo (R$)" },
-                { value: "percent", label: "Percentual (0–1)" },
-              ]}
-              onChange={(v) =>
-                setTeam({ ...team, enrollmentFeeType: v as "fixed" | "percent" })
-              }
-            />
-            <NumberField
-              label="Valor da taxa de matrícula"
-              step={0.01}
-              value={team.enrollmentFeeValue}
-              onChange={(v) => setTeam({ ...team, enrollmentFeeValue: v })}
-            />
-            <NumberField
-              label="Retenção da escola (0–1)"
-              step={0.01}
-              value={team.schoolRetentionPercentage}
-              onChange={(v) => setTeam({ ...team, schoolRetentionPercentage: v })}
-            />
-            <NumberField
-              label="Ferramentas (R$/mês)"
-              step={0.01}
-              value={team.generalToolsCost}
-              onChange={(v) => setTeam({ ...team, generalToolsCost: v })}
-            />
-            <NumberField
-              label="Tráfego pago (R$/mês)"
-              step={0.01}
-              value={team.paidTrafficCost}
-              onChange={(v) => setTeam({ ...team, paidTrafficCost: v })}
-            />
-            <NumberField
-              label="Outros custos comerciais (R$/mês)"
-              step={0.01}
-              value={team.otherCommercialCosts}
-              onChange={(v) => setTeam({ ...team, otherCommercialCosts: v })}
-            />
+
+          <div className="space-y-6">
+            <FieldGroup
+              title="Percentuais sobre a matrícula"
+              hint="Quanto cada parte recebe sobre o valor bruto da matrícula."
+            >
+              <PercentField
+                label="% da central / franqueadora"
+                value={team.headquartersPercentage}
+                onChange={(v) => setTeam({ ...team, headquartersPercentage: v })}
+              />
+              <PercentField
+                label="% comissão do consultor / vendedor"
+                value={team.consultantCommissionPercentage}
+                onChange={(v) =>
+                  setTeam({ ...team, consultantCommissionPercentage: v })
+                }
+              />
+              <PercentField
+                label="% comissão do gerente"
+                value={team.managerCommissionPercentage}
+                onChange={(v) =>
+                  setTeam({ ...team, managerCommissionPercentage: v })
+                }
+              />
+            </FieldGroup>
+
+            <FieldGroup
+              title="Custos sobre o pagamento"
+              hint="Taxas e custos descontados da matrícula."
+            >
+              <PercentField
+                label="Taxa da maquininha / cartão de crédito"
+                value={team.cardFeePercentage}
+                onChange={(v) => setTeam({ ...team, cardFeePercentage: v })}
+              />
+              <NumberField
+                label="Outros custos por matrícula (R$)"
+                step={0.01}
+                value={team.otherCommercialCosts}
+                onChange={(v) =>
+                  setTeam({ ...team, otherCommercialCosts: v })
+                }
+              />
+            </FieldGroup>
+
+            <FieldGroup
+              title="Resultado desejado"
+              hint="Meta de retenção líquida para a escola após todos os descontos."
+            >
+              <PercentField
+                label="% retenção líquida desejada da escola"
+                value={team.schoolRetentionPercentage}
+                onChange={(v) =>
+                  setTeam({ ...team, schoolRetentionPercentage: v })
+                }
+              />
+            </FieldGroup>
+
+            <NetSummary team={team} />
           </div>
+
           <button
             onClick={saveTeam}
             disabled={saving}
@@ -468,5 +476,119 @@ function SelectField({
         ))}
       </select>
     </label>
+  );
+}
+
+function FieldGroup({
+  title,
+  hint,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-card/40 p-4">
+      <div className="mb-3">
+        <div className="text-sm font-semibold">{title}</div>
+        {hint && (
+          <div className="text-[11px] text-muted-foreground mt-0.5">{hint}</div>
+        )}
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** Input em % (0–100) que persiste no banco como decimal (0–1). */
+function PercentField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  const display = Number.isFinite(value) ? +(value * 100).toFixed(4) : 0;
+  return (
+    <label className="block">
+      <div className="text-xs font-medium text-muted-foreground mb-1">{label}</div>
+      <div className="relative">
+        <input
+          type="number"
+          step={0.01}
+          min={0}
+          max={100}
+          value={display}
+          onChange={(e) => {
+            const n = Number(e.target.value);
+            onChange(Number.isFinite(n) ? n / 100 : 0);
+          }}
+          className="w-full bg-input border border-border rounded-lg px-3 py-2 pr-8 text-sm"
+        />
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+          %
+        </span>
+      </div>
+    </label>
+  );
+}
+
+function NetSummary({ team }: { team: TeamFinancialSettings }) {
+  const sample = 1000;
+  const central = sample * team.headquartersPercentage;
+  const consultor = sample * team.consultantCommissionPercentage;
+  const gerente = sample * team.managerCommissionPercentage;
+  const cartao = sample * team.cardFeePercentage;
+  const outros = team.otherCommercialCosts;
+  const liquido = sample - central - consultor - gerente - cartao - outros;
+  const liquidoPct = (liquido / sample) * 100;
+  const meta = team.schoolRetentionPercentage * 100;
+  const fmt = (n: number) =>
+    n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  return (
+    <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 text-sm">
+      <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+        Simulação para matrícula de {fmt(sample)}
+      </div>
+      <ul className="space-y-1">
+        <Row label="Valor bruto da matrícula" value={fmt(sample)} />
+        <Row label="(−) Central / franqueadora" value={`− ${fmt(central)}`} />
+        <Row label="(−) Comissão consultor" value={`− ${fmt(consultor)}`} />
+        <Row label="(−) Comissão gerente" value={`− ${fmt(gerente)}`} />
+        <Row label="(−) Taxa maquininha / cartão" value={`− ${fmt(cartao)}`} />
+        <Row label="(−) Outros custos" value={`− ${fmt(outros)}`} />
+      </ul>
+      <div className="mt-3 pt-3 border-t border-border flex flex-wrap items-baseline justify-between gap-2">
+        <div>
+          <div className="text-xs text-muted-foreground">
+            Líquido estimado para a escola
+          </div>
+          <div className="text-lg font-display font-bold">
+            {fmt(liquido)}{" "}
+            <span className="text-xs text-muted-foreground font-sans font-normal">
+              ({liquidoPct.toFixed(1)}%)
+            </span>
+          </div>
+        </div>
+        <div className="text-xs text-muted-foreground">
+          Meta de retenção: <b>{meta.toFixed(1)}%</b>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <li className="flex justify-between gap-3">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-mono">{value}</span>
+    </li>
   );
 }
