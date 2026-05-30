@@ -21,7 +21,7 @@ import { AuthBar } from "@/components/AuthBar";
 import { WeeklyCompetitions } from "@/components/WeeklyCompetitions";
 import { LatestEnrollmentSpotlight } from "@/components/LatestEnrollmentSpotlight";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { Plus, Trophy, Flame, Users, Loader2, GraduationCap, Crown, Pencil, Palette } from "lucide-react";
+import { Plus, Trophy, Flame, Users, Loader2, GraduationCap, Crown, Pencil, Palette, TrendingUp } from "lucide-react";
 import { useBrandText, saveBrandText, type BrandText } from "@/hooks/useBrandLogo";
 import { BrandLogo } from "@/components/BrandLogo";
 import { getAccessibleSellerIds } from "@/lib/access";
@@ -38,8 +38,10 @@ export function RankingView() {
   const isFranchisee = cu.isFranchisee;
   const isManager = cu.isManager;
   const isAdmin = role === "admin";
+  const isCeoOrAdmin = role === "admin" || role === "ceo";
   const [teamTab, setTeamTab] = useState<"all" | "mine">("all");
   const [enrollAgg, setEnrollAgg] = useState<Record<string, { monthly: number; commission: number }>>({});
+  const [vgvTotal, setVgvTotal] = useState<number>(0);
   const [claiming, setClaiming] = useState(false);
   const [enrollSellerId, setEnrollSellerId] = useState<string | null>(null);
   const [accessibleIds, setAccessibleIds] = useState<string[] | null>(null);
@@ -125,26 +127,31 @@ export function RankingView() {
   }, []);
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!isCeoOrAdmin) return;
     let mounted = true;
     fetchEnrollments()
       .then((rows) => {
         if (!mounted) return;
         const agg: Record<string, { monthly: number; commission: number }> = {};
+        let vgv = 0;
         for (const r of rows) {
           if (r.status !== "approved") continue;
           const cur = agg[r.sellerId] ?? { monthly: 0, commission: 0 };
           cur.monthly += Number(r.monthlyFee) || 0;
           cur.commission += Number(r.commissionAmount) || 0;
           agg[r.sellerId] = cur;
+          vgv +=
+            (Number(r.enrollmentValue) || 0) +
+            (Number(r.monthlyFee) || 0) * 18;
         }
         setEnrollAgg(agg);
+        setVgvTotal(vgv);
       })
       .catch((e) => console.warn("Não foi possível carregar matrículas:", e));
     return () => {
       mounted = false;
     };
-  }, [isAdmin]);
+  }, [isCeoOrAdmin]);
 
   const setWeights = (weights: Weights) => setConfig({ ...config, weights });
 
