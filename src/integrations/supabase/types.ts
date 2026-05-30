@@ -417,12 +417,16 @@ export type Database = {
         Row: {
           average_lifetime_months: number
           cancellation_rate: number
+          card_fee_percentage: number
+          consultant_commission_percentage: number
           contract_duration_months: number
           created_at: string
           enrollment_fee_type: string
           enrollment_fee_value: number
           general_tools_cost: number
+          headquarters_percentage: number
           id: string
+          manager_commission_percentage: number
           manager_user_id: string
           other_commercial_costs: number
           paid_traffic_cost: number
@@ -433,12 +437,16 @@ export type Database = {
         Insert: {
           average_lifetime_months?: number
           cancellation_rate?: number
+          card_fee_percentage?: number
+          consultant_commission_percentage?: number
           contract_duration_months?: number
           created_at?: string
           enrollment_fee_type?: string
           enrollment_fee_value?: number
           general_tools_cost?: number
+          headquarters_percentage?: number
           id?: string
+          manager_commission_percentage?: number
           manager_user_id: string
           other_commercial_costs?: number
           paid_traffic_cost?: number
@@ -449,12 +457,16 @@ export type Database = {
         Update: {
           average_lifetime_months?: number
           cancellation_rate?: number
+          card_fee_percentage?: number
+          consultant_commission_percentage?: number
           contract_duration_months?: number
           created_at?: string
           enrollment_fee_type?: string
           enrollment_fee_value?: number
           general_tools_cost?: number
+          headquarters_percentage?: number
           id?: string
+          manager_commission_percentage?: number
           manager_user_id?: string
           other_commercial_costs?: number
           paid_traffic_cost?: number
