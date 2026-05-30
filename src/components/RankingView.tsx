@@ -360,7 +360,11 @@ export function RankingView() {
 
 
       <section className={`grid grid-cols-2 ${isStaff ? "md:grid-cols-4" : "md:grid-cols-2"} gap-3 mb-10`}>
-        <Stat icon={Users} label="Equipe ativa" value={String(sellers.length)} />
+        {isCeoOrAdmin ? (
+          <Stat icon={TrendingUp} label="VGV geral" value={formatBRL(vgvTotal)} accent />
+        ) : (
+          <Stat icon={Users} label="Equipe ativa" value={String(sellers.length)} />
+        )}
         {isStaff && (
           <Stat icon={Flame} label="Material vendido" value={formatBRL(totalMaterial)} accent />
         )}
