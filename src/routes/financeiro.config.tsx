@@ -34,6 +34,10 @@ const EMPTY_TEAM = (uid: string): TeamFinancialSettings => ({
   generalToolsCost: 0,
   paidTrafficCost: 0,
   otherCommercialCosts: 0,
+  headquartersPercentage: 0,
+  consultantCommissionPercentage: 0,
+  managerCommissionPercentage: 0,
+  cardFeePercentage: 0,
 });
 
 const emptyCost = (sellerId: string): SellerFinancialSettings => ({
