@@ -142,6 +142,7 @@ export function RankingView() {
           agg[r.sellerId] = cur;
           vgv +=
             (Number(r.enrollmentValue) || 0) +
+            (Number(r.materialValue) || 0) +
             (Number(r.monthlyFee) || 0) * 18;
         }
         setEnrollAgg(agg);
