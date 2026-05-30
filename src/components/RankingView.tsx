@@ -164,15 +164,12 @@ export function RankingView() {
   const visibleRanked = useMemo(
     () => {
       let list = ranked;
-      // Franqueado (gestor não-staff) só vê vendedores da própria equipe
-      if (!isStaff && isFranchisee && accessibleIds !== null) {
-        const allow = new Set(accessibleIds);
-        list = list.filter((s) => allow.has(s.id));
-      }
+      // Ranking completo mostra todos os vendedores da rede para qualquer papel.
+      // Restrições por equipe (franqueado/diretor) se aplicam apenas em Financeiro.
       if (isStaff && teamTab === "mine") list = list.filter((s) => s.inMyTeam);
       return list;
     },
-    [ranked, teamTab, isStaff, isFranchisee, accessibleIds],
+    [ranked, teamTab, isStaff],
   );
 
   const totalMaterial = sellers.reduce((a, s) => a + s.material, 0);
