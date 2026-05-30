@@ -84,7 +84,10 @@ export function computeScopeKpis(
     ltvAdj += ltvAdjusted(e, settings);
     commission += commissionOf(e);
     expected += expectedRevenue(e, settings);
-    vgv += e.enrollmentValue + e.monthlyFee * settings.contractDurationMonths;
+    vgv +=
+      e.enrollmentValue +
+      (e.materialValue ?? 0) +
+      e.monthlyFee * settings.contractDurationMonths;
   }
 
   const salariesTotal = sellerCosts.reduce(
