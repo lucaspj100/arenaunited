@@ -155,68 +155,72 @@ function ConfigPage() {
             Configurações da minha escola/franquia
           </h2>
           <p className="text-xs text-muted-foreground mb-3">
-            Esses valores valem só para a sua equipe. CAC, LTV e ROI da sua
-            escola são calculados com base neles.
+            Defina os percentuais e custos que compõem o cálculo do valor
+            líquido de cada matrícula. Cada escola pode ter seus próprios
+            valores. Use percentuais entre 0 e 100.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            <NumberField
-              label="LTV — tempo médio de permanência (meses)"
-              value={team.averageLifetimeMonths}
-              onChange={(v) => setTeam({ ...team, averageLifetimeMonths: v })}
-            />
-            <NumberField
-              label="Duração do contrato (meses)"
-              value={team.contractDurationMonths}
-              onChange={(v) => setTeam({ ...team, contractDurationMonths: v })}
-            />
-            <NumberField
-              label="Taxa de cancelamento (0–1)"
-              step={0.01}
-              value={team.cancellationRate}
-              onChange={(v) => setTeam({ ...team, cancellationRate: v })}
-            />
-            <SelectField
-              label="Tipo de taxa de matrícula"
-              value={team.enrollmentFeeType}
-              options={[
-                { value: "fixed", label: "Fixo (R$)" },
-                { value: "percent", label: "Percentual (0–1)" },
-              ]}
-              onChange={(v) =>
-                setTeam({ ...team, enrollmentFeeType: v as "fixed" | "percent" })
-              }
-            />
-            <NumberField
-              label="Valor da taxa de matrícula"
-              step={0.01}
-              value={team.enrollmentFeeValue}
-              onChange={(v) => setTeam({ ...team, enrollmentFeeValue: v })}
-            />
-            <NumberField
-              label="Retenção da escola (0–1)"
-              step={0.01}
-              value={team.schoolRetentionPercentage}
-              onChange={(v) => setTeam({ ...team, schoolRetentionPercentage: v })}
-            />
-            <NumberField
-              label="Ferramentas (R$/mês)"
-              step={0.01}
-              value={team.generalToolsCost}
-              onChange={(v) => setTeam({ ...team, generalToolsCost: v })}
-            />
-            <NumberField
-              label="Tráfego pago (R$/mês)"
-              step={0.01}
-              value={team.paidTrafficCost}
-              onChange={(v) => setTeam({ ...team, paidTrafficCost: v })}
-            />
-            <NumberField
-              label="Outros custos comerciais (R$/mês)"
-              step={0.01}
-              value={team.otherCommercialCosts}
-              onChange={(v) => setTeam({ ...team, otherCommercialCosts: v })}
-            />
+
+          <div className="space-y-6">
+            <FieldGroup
+              title="Percentuais sobre a matrícula"
+              hint="Quanto cada parte recebe sobre o valor bruto da matrícula."
+            >
+              <PercentField
+                label="% da central / franqueadora"
+                value={team.headquartersPercentage}
+                onChange={(v) => setTeam({ ...team, headquartersPercentage: v })}
+              />
+              <PercentField
+                label="% comissão do consultor / vendedor"
+                value={team.consultantCommissionPercentage}
+                onChange={(v) =>
+                  setTeam({ ...team, consultantCommissionPercentage: v })
+                }
+              />
+              <PercentField
+                label="% comissão do gerente"
+                value={team.managerCommissionPercentage}
+                onChange={(v) =>
+                  setTeam({ ...team, managerCommissionPercentage: v })
+                }
+              />
+            </FieldGroup>
+
+            <FieldGroup
+              title="Custos sobre o pagamento"
+              hint="Taxas e custos descontados da matrícula."
+            >
+              <PercentField
+                label="Taxa da maquininha / cartão de crédito"
+                value={team.cardFeePercentage}
+                onChange={(v) => setTeam({ ...team, cardFeePercentage: v })}
+              />
+              <NumberField
+                label="Outros custos por matrícula (R$)"
+                step={0.01}
+                value={team.otherCommercialCosts}
+                onChange={(v) =>
+                  setTeam({ ...team, otherCommercialCosts: v })
+                }
+              />
+            </FieldGroup>
+
+            <FieldGroup
+              title="Resultado desejado"
+              hint="Meta de retenção líquida para a escola após todos os descontos."
+            >
+              <PercentField
+                label="% retenção líquida desejada da escola"
+                value={team.schoolRetentionPercentage}
+                onChange={(v) =>
+                  setTeam({ ...team, schoolRetentionPercentage: v })
+                }
+              />
+            </FieldGroup>
+
+            <NetSummary team={team} />
           </div>
+
           <button
             onClick={saveTeam}
             disabled={saving}
