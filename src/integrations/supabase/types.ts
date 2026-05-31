@@ -355,6 +355,7 @@ export type Database = {
           goal_material: number
           id: string
           in_my_team: boolean
+          manager_seller_id: string | null
           material: number
           name: string
           position: number
@@ -377,6 +378,7 @@ export type Database = {
           goal_material?: number
           id?: string
           in_my_team?: boolean
+          manager_seller_id?: string | null
           material?: number
           name: string
           position?: number
@@ -399,6 +401,7 @@ export type Database = {
           goal_material?: number
           id?: string
           in_my_team?: boolean
+          manager_seller_id?: string | null
           material?: number
           name?: string
           position?: number
@@ -411,7 +414,36 @@ export type Database = {
           week_enrollments?: number
           week_scheduled?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sellers_manager_seller_id_fkey"
+            columns: ["manager_seller_id"]
+            isOneToOne: false
+            referencedRelation: "latest_approved_enrollment"
+            referencedColumns: ["seller_id"]
+          },
+          {
+            foreignKeyName: "sellers_manager_seller_id_fkey"
+            columns: ["manager_seller_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_seller_stats"
+            referencedColumns: ["seller_id"]
+          },
+          {
+            foreignKeyName: "sellers_manager_seller_id_fkey"
+            columns: ["manager_seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sellers_manager_seller_id_fkey"
+            columns: ["manager_seller_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_seller_stats"
+            referencedColumns: ["seller_id"]
+          },
+        ]
       }
       team_financial_settings: {
         Row: {
