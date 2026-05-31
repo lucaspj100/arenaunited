@@ -21,6 +21,12 @@ export const Route = createFileRoute("/financeiro/config")({
 });
 
 type SellerLite = { id: string; name: string };
+type SellerWithMgr = {
+  id: string;
+  name: string;
+  role: "consultor" | "gerente";
+  managerSellerId: string | null;
+};
 
 const EMPTY_TEAM = (uid: string): TeamFinancialSettings => ({
   id: "",
@@ -55,6 +61,7 @@ function ConfigPage() {
   const [globalSettings, setGlobalSettings] = useState<FinancialSettings | null>(null);
   const [team, setTeam] = useState<TeamFinancialSettings | null>(null);
   const [sellers, setSellers] = useState<SellerLite[]>([]);
+  const [sellersFull, setSellersFull] = useState<SellerWithMgr[]>([]);
   const [costs, setCosts] = useState<Record<string, SellerFinancialSettings>>({});
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -65,7 +72,10 @@ function ConfigPage() {
       const ids = await getAccessibleSellerIds();
       const [s, sellersRes, costsRows] = await Promise.all([
         fetchFinancialSettings(),
-        supabase.from("sellers").select("id,name").order("name"),
+        supabase
+          .from("sellers")
+          .select("id,name,role,manager_seller_id")
+          .order("name"),
         fetchSellerFinancialSettings(ids ?? undefined),
       ]);
       let t: TeamFinancialSettings | null = null;
@@ -76,9 +86,21 @@ function ConfigPage() {
       if (!mounted) return;
       setGlobalSettings(s);
       setTeam(t);
-      const allSellers = (sellersRes.data ?? []) as SellerLite[];
-      setSellers(
-        ids === null ? allSellers : allSellers.filter((x) => ids.includes(x.id)),
+      const allRows = (sellersRes.data ?? []) as Array<{
+        id: string;
+        name: string;
+        role: "consultor" | "gerente";
+        manager_seller_id: string | null;
+      }>;
+      const inScope = ids === null ? allRows : allRows.filter((x) => ids.includes(x.id));
+      setSellers(inScope.map((r) => ({ id: r.id, name: r.name })));
+      setSellersFull(
+        inScope.map((r) => ({
+          id: r.id,
+          name: r.name,
+          role: r.role,
+          managerSellerId: r.manager_seller_id,
+        })),
       );
       const map: Record<string, SellerFinancialSettings> = {};
       for (const c of costsRows) map[c.sellerId] = c;
@@ -125,6 +147,29 @@ function ConfigPage() {
     try {
       await upsertSellerFinancialSettings(c, userId ?? undefined);
       setMsg("Custos do vendedor salvos.");
+    } catch (e) {
+      setMsg("Erro: " + (e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateSellerManager = async (
+    sellerId: string,
+    managerSellerId: string | null,
+  ) => {
+    setSellersFull((prev) =>
+      prev.map((s) => (s.id === sellerId ? { ...s, managerSellerId } : s)),
+    );
+    setSaving(true);
+    setMsg(null);
+    try {
+      const { error } = await supabase
+        .from("sellers")
+        .update({ manager_seller_id: managerSellerId })
+        .eq("id", sellerId);
+      if (error) throw error;
+      setMsg("Gerente atualizado.");
     } catch (e) {
       setMsg("Erro: " + (e as Error).message);
     } finally {
@@ -345,12 +390,40 @@ function ConfigPage() {
         <div className="space-y-2">
           {sellers.map((s) => {
             const c = costs[s.id] ?? emptyCost(s.id);
+            const full = sellersFull.find((x) => x.id === s.id);
+            const isConsultor = full?.role === "consultor";
+            const managers = sellersFull.filter((x) => x.role === "gerente");
             return (
               <div
                 key={s.id}
-                className="grid grid-cols-1 md:grid-cols-6 items-end gap-3 rounded-lg border border-border bg-card p-3"
+                className="grid grid-cols-1 md:grid-cols-7 items-end gap-3 rounded-lg border border-border bg-card p-3"
               >
-                <div className="md:col-span-1 font-semibold">{s.name}</div>
+                <div className="md:col-span-1">
+                  <div className="font-semibold">{s.name}</div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    {full?.role ?? ""}
+                  </div>
+                </div>
+                <label className="block">
+                  <div className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground mb-1">
+                    Gerente
+                  </div>
+                  <select
+                    disabled={!isConsultor || saving}
+                    value={full?.managerSellerId ?? ""}
+                    onChange={(e) =>
+                      updateSellerManager(s.id, e.target.value || null)
+                    }
+                    className="w-full bg-input border border-border rounded-md px-2 py-1.5 text-sm disabled:opacity-50"
+                  >
+                    <option value="">— Sem gerente —</option>
+                    {managers.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <NumberField
                   small
                   label="Salário (R$/mês)"
