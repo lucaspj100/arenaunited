@@ -545,7 +545,7 @@ export function RankingView() {
           canEditAll={true}
           onSave={async (input) => {
             await createEnrollment(input);
-            const data = await fetchSellers();
+            const data = await fetchMonthlySellers();
             setSellers(data);
           }}
         />
