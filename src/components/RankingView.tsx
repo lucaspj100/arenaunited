@@ -9,6 +9,8 @@ import {
   loadLocalConfig,
   saveLocalConfig,
 } from "@/lib/storage";
+import { fetchMonthlySellers } from "@/lib/monthlyRanking";
+import { RankingHistory } from "@/components/RankingHistory";
 import { fetchEnrollments, createEnrollment } from "@/lib/enrollments";
 import { EnrollmentFormDialog } from "@/components/EnrollmentFormDialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,6 +47,7 @@ export function RankingView() {
   const [claiming, setClaiming] = useState(false);
   const [enrollSellerId, setEnrollSellerId] = useState<string | null>(null);
   const [accessibleIds, setAccessibleIds] = useState<string[] | null>(null);
+  const [mainTab, setMainTab] = useState<"current" | "history">("current");
   const { text: brandText, refresh: refreshBrandText } = useBrandText();
   const [editingBrand, setEditingBrand] = useState(false);
   const [brandDraft, setBrandDraft] = useState<BrandText>(brandText);
@@ -87,7 +90,7 @@ export function RankingView() {
     getAccessibleSellerIds()
       .then((ids) => mounted && setAccessibleIds(ids))
       .catch(() => mounted && setAccessibleIds(null));
-    fetchSellers()
+    fetchMonthlySellers()
       .then((data) => {
         if (!mounted) return;
         setSellers(data);
@@ -101,21 +104,21 @@ export function RankingView() {
         "postgres_changes",
         { event: "*", schema: "public", table: "sellers" },
         () => {
-          fetchSellers().then((d) => mounted && setSellers(d)).catch(console.error);
+          fetchMonthlySellers().then((d) => mounted && setSellers(d)).catch(console.error);
         },
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "interviews" },
         () => {
-          fetchSellers().then((d) => mounted && setSellers(d)).catch(console.error);
+          fetchMonthlySellers().then((d) => mounted && setSellers(d)).catch(console.error);
         },
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "enrollments" },
         () => {
-          fetchSellers().then((d) => mounted && setSellers(d)).catch(console.error);
+          fetchMonthlySellers().then((d) => mounted && setSellers(d)).catch(console.error);
         },
       )
       .subscribe();
@@ -215,7 +218,7 @@ export function RankingView() {
       updateSellerRow(id, patch).catch((e) => {
         console.error("Erro ao salvar:", e);
         alert("Não foi possível salvar: " + (e?.message ?? "permissão negada"));
-        fetchSellers().then(setSellers).catch(console.error);
+        fetchMonthlySellers().then(setSellers).catch(console.error);
       });
     }, 400);
   };
@@ -236,7 +239,7 @@ export function RankingView() {
     try {
       const { error } = await supabase.rpc("claim_seller_profile");
       if (error) throw error;
-      const data = await fetchSellers();
+      const data = await fetchMonthlySellers();
       setSellers(data);
     } catch (e) {
       alert("Não foi possível entrar no ranking: " + ((e as Error)?.message ?? "erro"));
@@ -431,6 +434,26 @@ export function RankingView() {
 
       <section className="grid lg:grid-cols-[1fr_360px] gap-6">
         <div>
+          <div className="inline-flex rounded-lg bg-secondary p-0.5 text-xs font-semibold mb-4">
+            <button
+              type="button"
+              onClick={() => setMainTab("current")}
+              className={`px-4 py-2 rounded-md transition ${mainTab === "current" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              Ranking Atual
+            </button>
+            <button
+              type="button"
+              onClick={() => setMainTab("history")}
+              className={`px-4 py-2 rounded-md transition ${mainTab === "history" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              Histórico
+            </button>
+          </div>
+          {mainTab === "history" ? (
+            <RankingHistory />
+          ) : (
+          <>
           <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
             <div className="flex items-center gap-3">
               <h2 className="font-display font-bold text-xl">
@@ -494,6 +517,8 @@ export function RankingView() {
               </div>
             )}
           </div>
+          </>
+          )}
         </div>
 
         <aside className="space-y-4">
@@ -542,7 +567,7 @@ export function RankingView() {
           canEditAll={true}
           onSave={async (input) => {
             await createEnrollment(input);
-            const data = await fetchSellers();
+            const data = await fetchMonthlySellers();
             setSellers(data);
           }}
         />

@@ -273,6 +273,57 @@ export type Database = {
           },
         ]
       }
+      monthly_ranking_snapshots: {
+        Row: {
+          closed_at: string
+          conversion_rate: number
+          final_position: number
+          id: string
+          month: number
+          role_snapshot: Database["public"]["Enums"]["seller_role"]
+          seller_id: string
+          seller_name: string
+          total_completed: number
+          total_enrollments: number
+          total_material: number
+          total_scheduled: number
+          total_score: number
+          year: number
+        }
+        Insert: {
+          closed_at?: string
+          conversion_rate?: number
+          final_position: number
+          id?: string
+          month: number
+          role_snapshot: Database["public"]["Enums"]["seller_role"]
+          seller_id: string
+          seller_name: string
+          total_completed?: number
+          total_enrollments?: number
+          total_material?: number
+          total_scheduled?: number
+          total_score?: number
+          year: number
+        }
+        Update: {
+          closed_at?: string
+          conversion_rate?: number
+          final_position?: number
+          id?: string
+          month?: number
+          role_snapshot?: Database["public"]["Enums"]["seller_role"]
+          seller_id?: string
+          seller_name?: string
+          total_completed?: number
+          total_enrollments?: number
+          total_material?: number
+          total_scheduled?: number
+          total_score?: number
+          year?: number
+        }
+        Relationships: []
+      }
       seller_financial_settings: {
         Row: {
           active_for_financial_analysis: boolean
@@ -658,6 +709,45 @@ export type Database = {
           },
         ]
       }
+      seller_monthly_approved_totals: {
+        Row: {
+          approved_deals: number | null
+          approved_material_value: number | null
+          month: number | null
+          seller_id: string | null
+          year: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollments_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "latest_approved_enrollment"
+            referencedColumns: ["seller_id"]
+          },
+          {
+            foreignKeyName: "enrollments_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_seller_stats"
+            referencedColumns: ["seller_id"]
+          },
+          {
+            foreignKeyName: "enrollments_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollments_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_seller_stats"
+            referencedColumns: ["seller_id"]
+          },
+        ]
+      }
       weekly_seller_stats: {
         Row: {
           seller_id: string | null
@@ -670,6 +760,11 @@ export type Database = {
     }
     Functions: {
       claim_seller_profile: { Args: never; Returns: string }
+      close_monthly_ranking: {
+        Args: { p_month: number; p_year: number }
+        Returns: number
+      }
+      close_previous_month_ranking: { Args: never; Returns: number }
       current_seller_id: { Args: never; Returns: string }
       has_role: {
         Args: {
