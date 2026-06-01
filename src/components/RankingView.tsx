@@ -9,6 +9,8 @@ import {
   loadLocalConfig,
   saveLocalConfig,
 } from "@/lib/storage";
+import { fetchMonthlySellers } from "@/lib/monthlyRanking";
+import { RankingHistory } from "@/components/RankingHistory";
 import { fetchEnrollments, createEnrollment } from "@/lib/enrollments";
 import { EnrollmentFormDialog } from "@/components/EnrollmentFormDialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,6 +47,7 @@ export function RankingView() {
   const [claiming, setClaiming] = useState(false);
   const [enrollSellerId, setEnrollSellerId] = useState<string | null>(null);
   const [accessibleIds, setAccessibleIds] = useState<string[] | null>(null);
+  const [mainTab, setMainTab] = useState<"current" | "history">("current");
   const { text: brandText, refresh: refreshBrandText } = useBrandText();
   const [editingBrand, setEditingBrand] = useState(false);
   const [brandDraft, setBrandDraft] = useState<BrandText>(brandText);
@@ -87,7 +90,7 @@ export function RankingView() {
     getAccessibleSellerIds()
       .then((ids) => mounted && setAccessibleIds(ids))
       .catch(() => mounted && setAccessibleIds(null));
-    fetchSellers()
+    fetchMonthlySellers()
       .then((data) => {
         if (!mounted) return;
         setSellers(data);
@@ -101,21 +104,21 @@ export function RankingView() {
         "postgres_changes",
         { event: "*", schema: "public", table: "sellers" },
         () => {
-          fetchSellers().then((d) => mounted && setSellers(d)).catch(console.error);
+          fetchMonthlySellers().then((d) => mounted && setSellers(d)).catch(console.error);
         },
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "interviews" },
         () => {
-          fetchSellers().then((d) => mounted && setSellers(d)).catch(console.error);
+          fetchMonthlySellers().then((d) => mounted && setSellers(d)).catch(console.error);
         },
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "enrollments" },
         () => {
-          fetchSellers().then((d) => mounted && setSellers(d)).catch(console.error);
+          fetchMonthlySellers().then((d) => mounted && setSellers(d)).catch(console.error);
         },
       )
       .subscribe();
@@ -215,7 +218,7 @@ export function RankingView() {
       updateSellerRow(id, patch).catch((e) => {
         console.error("Erro ao salvar:", e);
         alert("Não foi possível salvar: " + (e?.message ?? "permissão negada"));
-        fetchSellers().then(setSellers).catch(console.error);
+        fetchMonthlySellers().then(setSellers).catch(console.error);
       });
     }, 400);
   };
@@ -236,7 +239,7 @@ export function RankingView() {
     try {
       const { error } = await supabase.rpc("claim_seller_profile");
       if (error) throw error;
-      const data = await fetchSellers();
+      const data = await fetchMonthlySellers();
       setSellers(data);
     } catch (e) {
       alert("Não foi possível entrar no ranking: " + ((e as Error)?.message ?? "erro"));
