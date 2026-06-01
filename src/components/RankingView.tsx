@@ -517,6 +517,8 @@ export function RankingView() {
               </div>
             )}
           </div>
+          </>
+          )}
         </div>
 
         <aside className="space-y-4">
