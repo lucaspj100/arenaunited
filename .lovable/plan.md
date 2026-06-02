@@ -1,68 +1,41 @@
+## O que vai mudar
 
-# Ranking mensal + Histórico
+### 1. Acessos — ADM gera senha temporária
 
-Hoje o ranking lê colunas acumuladas em `sellers` (`deals`, `material`, `week_*`). Por isso ele "carrega" mês passado. A solução é calcular o ranking sempre a partir de fatos datados (matrículas e entrevistas) filtrados pelo mês vigente, e snapshotar o fechamento.
+Na página **Acessos**, apenas para o ADM, vai aparecer ao lado de cada usuário cadastrado:
+- O **e-mail** de login (já é visível hoje).
+- Um botão **"Gerar senha temporária"** que cria uma nova senha aleatória, mostra **uma única vez** na tela (com botão de copiar) e já a aplica na conta do usuário.
+- Depois de fechar o aviso, a senha não pode mais ser vista (fica criptografada no banco, como exige a segurança).
 
-## 1. Banco de dados (migration nova)
+Importante: o sistema não consegue mostrar a senha que o usuário escolheu — só a **nova** que o ADM acabou de gerar. Esse é o padrão usado por bancos, Google, etc.
 
-**Tabela `monthly_ranking_snapshots`** (histórico fechado):
-- `id`, `seller_id`, `seller_name` (snapshot), `role_snapshot`, `manager_user_id` (snapshot do franqueado/diretor), `month` (int 1-12), `year` (int), `final_position`, `total_scheduled`, `total_completed`, `total_enrollments`, `total_material` (numeric), `total_score` (numeric), `conversion_rate` (numeric), `closed_at`.
-- Unique (`seller_id`, `month`, `year`).
-- RLS:
-  - staff (admin/ceo/diretor/presidente): SELECT tudo
-  - franqueado/gerente: SELECT onde `manages_seller(auth.uid(), seller_id)`
-  - vendedor: SELECT do próprio (`seller_id = current_seller_id()`)
-  - INSERT/UPDATE só service_role (job de fechamento)
+### 2. Diretor e Franqueado entram no ranking
 
-**Cron de fechamento** (`pg_cron` + função SQL `public.close_previous_month_ranking()`):
-- Roda dia 1 às 00:05 do fuso do projeto.
-- Para o mês anterior: agrega `enrollments` (status=approved) e `interviews` por seller_id, calcula posição final usando o mesmo critério (matrículas → material → score), insere em `monthly_ranking_snapshots` (ON CONFLICT DO NOTHING).
-- Snapshot também `manager_user_id` via `team_seller_links` ativo no momento do fechamento.
+- Na página de **Ranking** (ou no Perfil), diretor e franqueado que ainda não estão no ranking veem um botão **"Participar do ranking"** que cria o perfil de competidor deles (como consultor ou gerente, à escolha).
+- Eles passam a aparecer junto com os outros vendedores no ranking mensal, com suas próprias matrículas, material e conversões.
+- Cada gestor pode **editar suas próprias metas** (matrículas e material do mês) direto no perfil dele — mesmo que ele seja diretor/franqueado.
 
-## 2. Camada de dados (frontend)
+### 3. Dashboard do gestor (versão equipe)
 
-**Novo `src/lib/monthlyRanking.ts`**:
-- `fetchCurrentMonthRanking()`: lê `enrollments` (mês vigente, approved) + `interviews` (mês vigente) agrupados por seller, junta com `sellers` (nome/role/avatar/metas) e devolve no formato `Seller` que o ranking já consome — mas com `deals`/`material`/`weekScheduled`/`weekCompleted`/`weekEnrollments` = totais **do mês**.
-- `fetchRankingHistory({ month, year, sellerId?, managerUserId?, role? })`: lê `monthly_ranking_snapshots` com filtros, respeitando RLS.
-- `closeCurrentMonthClient()` (opcional, admin): chama a SQL function manualmente para reprocessar.
+Vai existir uma página **"Meu Dashboard"** específica para diretor/franqueado com o mesmo visual do dashboard do vendedor, mas com foco em equipe:
 
-## 3. `RankingView.tsx`
+- **Resumo pessoal**: matrículas, material, conversão e progresso de meta do próprio gestor (caso ele esteja no ranking).
+- **Resumo da equipe**: total de matrículas, material vendido, entrevistas marcadas/realizadas e ticket médio do mês — somando todos os liderados.
+- **Ranking dos liderados**: lista compacta dos vendedores da equipe ordenada por matrículas no mês.
+- **Programação semanal da equipe**: link rápido para a agenda da equipe.
+- **Rituais do dia**: mesmo bloco motivacional que o vendedor tem.
 
-- Substituir `fetchSellers()` por `fetchCurrentMonthRanking()` na origem dos dados do ranking principal (manter `fetchSellers` para edição/cadastro/CRUD em outras telas).
-- KPIs "Material vendido", "Matrículas fechadas", "Líder do mês" passam a refletir o mês.
-- Adicionar duas abas no topo da seção principal: **Ranking Atual** | **Histórico**.
+## Detalhes técnicos
 
-## 4. Nova aba "Histórico"
+**Banco:**
+- Ajustar `claim_seller_profile()` para aceitar também `diretor`, `ceo`, `presidente` e `franqueado` (hoje só aceita vendedor/franqueado).
+- Ajustar o trigger `enforce_seller_update_scope` para permitir que o **próprio dono** do registro (gestor ou vendedor) edite `goal_deals` e `goal_material`.
+- Nova função `admin_reset_user_password(user_id)` (security definer, apenas `is_admin`) que gera senha aleatória de 12 caracteres, atualiza via `auth.admin.updateUserById` e retorna a senha em texto puro **uma única vez**. Implementada como **server function** (`createServerFn`) com `supabaseAdmin` para chamar a API admin do Supabase.
 
-Componente `RankingHistory.tsx` com:
-- Seletor de **mês** e **ano** (padrão: mês anterior).
-- Filtros conforme perfil:
-  - vendedor: bloqueado em si mesmo, só vê seus meses.
-  - franqueado/gerente: filtro de vendedor (lista da equipe via `team_seller_links`).
-  - admin/ceo/diretor/presidente: filtro de vendedor, franqueado/unidade (manager_user_id), cargo.
-- Tabela: Posição · Vendedor · Cargo · Marcadas · Realizadas · Matrículas · Conversão · Pontuação.
-- Botão "Copiar CSV" para admin/diretor/franqueado.
-
-## 5. "Meu histórico" do vendedor
-
-Na página `/perfil` (ou em `vendedor.$sellerId.tsx` quando é o próprio), adicionar bloco "Meu histórico" mostrando lista mensal do próprio vendedor + delta vs mês anterior (matrículas e pontuação).
-
-## 6. Preservação dos dados antigos
-
-Nada é apagado:
-- `sellers.deals`, `sellers.material`, `sellers.week_*` continuam existindo (são usados em outras telas e na edição manual). O ranking simplesmente para de **lê-los** como fonte de verdade; passa a derivar do fato datado.
-- O primeiro fechamento populará `monthly_ranking_snapshots` para o(s) mês(es) anteriores que já têm `enrollments`/`interviews` registrados.
-
-## 7. Etapas de entrega
-
-1. Migration: tabela `monthly_ranking_snapshots` + função SQL `close_previous_month_ranking()` + cron + backfill dos meses anteriores existentes.
-2. `src/lib/monthlyRanking.ts` (current + history).
-3. Refator de `RankingView.tsx`: abas Atual/Histórico, fonte de dados mensal.
-4. Componente `RankingHistory.tsx` com filtros por perfil.
-5. Bloco "Meu histórico" em `/perfil`.
-
-## Pontos a confirmar
-
-- **Fuso para virada do mês**: usar `America/Sao_Paulo`? (afeta a função SQL e o filtro do mês vigente).
-- **`monthScheduled`/`monthCompleted`** já existem nas queries de `fetchSellers` (vejo o campo em `Seller`); confirmar se são totais do mês — se sim, posso reutilizar a mesma lógica para o ranking mensal.
-- Posso assumir que **matrículas pendentes** NÃO contam no ranking (só `approved`)?
+**Frontend:**
+- `src/lib/adminUsers.functions.ts` — server function `resetUserPassword` (admin only).
+- `src/routes/acessos.tsx` — botão "Gerar senha temporária" + dialog para mostrar senha uma vez (só admin).
+- `src/components/RankingView.tsx` ou `src/routes/perfil.tsx` — botão "Participar do ranking" para gestores sem perfil de seller.
+- `src/components/EditSellerDialog.tsx` ou `src/routes/perfil.tsx` — liberar campo de metas para o próprio gestor.
+- `src/routes/meu-dashboard.tsx` (nova) — dashboard com foco em equipe; rota disponível para diretor/franqueado.
+- Link no menu/AuthBar para "Meu Dashboard" quando o usuário for gestor.
