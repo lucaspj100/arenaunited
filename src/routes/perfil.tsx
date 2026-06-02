@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { ArrowLeft, Camera, Loader2, Save, Trophy, KeyRound } from "lucide-react";
+import { ArrowLeft, Camera, Loader2, Save, Trophy, KeyRound, Target, UserPlus } from "lucide-react";
 
 export const Route = createFileRoute("/perfil")({
   component: ProfilePage,
@@ -10,7 +10,8 @@ export const Route = createFileRoute("/perfil")({
 });
 
 function ProfilePage() {
-  const { loading: userLoading, userId, sellerId, email } = useCurrentUser();
+  const user = useCurrentUser();
+  const { loading: userLoading, userId, sellerId, email, role, isFranchisee, isDirectorLike } = user;
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
@@ -27,6 +28,17 @@ function ProfilePage() {
   const [pwMsg, setPwMsg] = useState<string | null>(null);
   const [pwErr, setPwErr] = useState<string | null>(null);
 
+  const [goalDeals, setGoalDeals] = useState<number>(20);
+  const [goalMaterial, setGoalMaterial] = useState<number>(30000);
+  const [goalsSaving, setGoalsSaving] = useState(false);
+  const [goalsMsg, setGoalsMsg] = useState<string | null>(null);
+  const [goalsErr, setGoalsErr] = useState<string | null>(null);
+  const [joining, setJoining] = useState(false);
+  const [joinErr, setJoinErr] = useState<string | null>(null);
+
+  const canJoinRanking =
+    !sellerId && (isFranchisee || isDirectorLike || role === "vendedor");
+
   useEffect(() => {
     if (userLoading) return;
     if (!userId) {
@@ -39,7 +51,7 @@ function ProfilePage() {
     }
     supabase
       .from("sellers")
-      .select("name,avatar")
+      .select("name,avatar,goal_deals,goal_material")
       .eq("id", sellerId)
       .single()
       .then(({ data, error }) => {
@@ -47,6 +59,8 @@ function ProfilePage() {
         else {
           setName(data.name);
           setAvatar(data.avatar);
+          setGoalDeals(Number(data.goal_deals) || 0);
+          setGoalMaterial(Number(data.goal_material) || 0);
         }
         setLoadingProfile(false);
       });
@@ -124,6 +138,36 @@ function ProfilePage() {
     }
   };
 
+  const saveGoals = async () => {
+    if (!sellerId) return;
+    setGoalsSaving(true);
+    setGoalsErr(null);
+    setGoalsMsg(null);
+    const { error } = await supabase
+      .from("sellers")
+      .update({
+        goal_deals: Math.max(0, Math.round(goalDeals)),
+        goal_material: Math.max(0, goalMaterial),
+      })
+      .eq("id", sellerId);
+    setGoalsSaving(false);
+    if (error) setGoalsErr(error.message);
+    else setGoalsMsg("Metas atualizadas.");
+  };
+
+  const joinRanking = async () => {
+    setJoining(true);
+    setJoinErr(null);
+    const { error } = await supabase.rpc("claim_seller_profile");
+    setJoining(false);
+    if (error) {
+      setJoinErr(error.message);
+      return;
+    }
+    // recarrega o useCurrentUser para pegar o novo sellerId
+    window.location.reload();
+  };
+
   if (userLoading || loadingProfile) {
     return (
       <main className="min-h-screen flex items-center justify-center text-muted-foreground">
@@ -147,8 +191,32 @@ function ProfilePage() {
       </header>
 
       {!sellerId && (
-        <div className="rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground">
-          Seu usuário ainda não está vinculado a um vendedor. Peça ao administrador para liberar seu acesso.
+        <div className="rounded-2xl border border-dashed border-border p-6 text-sm">
+          {canJoinRanking ? (
+            <>
+              <div className="flex items-center gap-2 mb-2">
+                <Trophy className="size-4 text-primary" />
+                <h2 className="font-display font-bold">Participar do ranking</h2>
+              </div>
+              <p className="text-muted-foreground mb-4">
+                Você ainda não tem um perfil de competidor. Crie o seu para aparecer no
+                ranking, definir metas e acompanhar matrículas e material vendido.
+              </p>
+              <button
+                onClick={joinRanking}
+                disabled={joining}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-60"
+              >
+                {joining ? <Loader2 className="size-4 animate-spin" /> : <UserPlus className="size-4" />}
+                Entrar no ranking
+              </button>
+              {joinErr && <p className="text-xs text-destructive mt-3">{joinErr}</p>}
+            </>
+          ) : (
+            <span className="text-muted-foreground">
+              Seu usuário ainda não está vinculado a um vendedor. Peça ao administrador para liberar seu acesso.
+            </span>
+          )}
         </div>
       )}
 
@@ -208,6 +276,50 @@ function ProfilePage() {
 
             {msg && <p className="text-xs text-primary mt-3">{msg}</p>}
             {err && <p className="text-xs text-destructive mt-3">{err}</p>}
+          </section>
+
+          <section className="rounded-2xl bg-card border border-border p-6 mb-6">
+            <div className="flex items-center gap-2 mb-1">
+              <Target className="size-4 text-primary" />
+              <h2 className="font-display font-bold">Minhas metas do mês</h2>
+            </div>
+            <p className="text-[11px] text-muted-foreground mb-4">
+              Defina suas próprias metas mensais. Elas valem para o ranking e o cálculo de score.
+            </p>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <label className="block">
+                <div className="text-xs font-medium text-muted-foreground mb-1.5">Meta de matrículas</div>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={goalDeals}
+                  onChange={(e) => setGoalDeals(Number(e.target.value))}
+                  className="w-full rounded-lg bg-input border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+                />
+              </label>
+              <label className="block">
+                <div className="text-xs font-medium text-muted-foreground mb-1.5">Meta de material (R$)</div>
+                <input
+                  type="number"
+                  min={0}
+                  step={100}
+                  value={goalMaterial}
+                  onChange={(e) => setGoalMaterial(Number(e.target.value))}
+                  className="w-full rounded-lg bg-input border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+                />
+              </label>
+            </div>
+            {goalsMsg && <p className="text-xs text-primary mt-3">{goalsMsg}</p>}
+            {goalsErr && <p className="text-xs text-destructive mt-3">{goalsErr}</p>}
+            <button
+              onClick={saveGoals}
+              disabled={goalsSaving}
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-60"
+            >
+              {goalsSaving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+              Salvar metas
+            </button>
           </section>
 
           <form onSubmit={changePassword} className="rounded-2xl bg-card border border-border p-6 space-y-3">
