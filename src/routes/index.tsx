@@ -17,7 +17,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const { loading, userId, email, role, isStaff, sellerId } = useCurrentUser();
+  const { loading, userId, email, role, isStaff, isFranchisee, isDirectorLike, sellerId } =
+    useCurrentUser();
 
   useEffect(() => {
     if (!loading && !userId) window.location.replace("/login");
@@ -46,6 +47,14 @@ function Index() {
               >
                 <ArrowLeft className="size-3.5" /> Ranking
               </Link>
+              {(isFranchisee || isDirectorLike) && (
+                <Link
+                  to="/meu-dashboard"
+                  className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90"
+                >
+                  Meu Dashboard
+                </Link>
+              )}
               <Link to="/perfil" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
                 Meu Perfil
               </Link>

@@ -2,7 +2,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { ArrowLeft, Loader2, Mail, Plus, Trash2, CheckCircle2, Clock, ShieldCheck, Save } from "lucide-react";
+import { ArrowLeft, Loader2, Mail, Plus, Trash2, CheckCircle2, Clock, ShieldCheck, Save, KeyRound, Copy, X } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { resetUserPassword } from "@/lib/adminUsers.functions";
 
 export const Route = createFileRoute("/acessos")({
   component: AccessesPage,
@@ -34,6 +36,9 @@ function AccessesPage() {
   const [appRole, setAppRole] = useState<"vendedor" | "franqueado" | "diretor" | "ceo" | "presidente">("vendedor");
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [pwInfo, setPwInfo] = useState<{ email: string | null; password: string; name: string } | null>(null);
+  const [pwLoadingId, setPwLoadingId] = useState<string | null>(null);
+  const resetPw = useServerFn(resetUserPassword);
 
   useEffect(() => {
     if (ul) return;
@@ -114,6 +119,21 @@ function AccessesPage() {
       }
     }
     load();
+  };
+
+  const onGeneratePassword = async (inv: Invite) => {
+    if (!inv.used_by) return;
+    if (!confirm(`Gerar uma nova senha temporária para ${inv.name}? A senha antiga deixará de funcionar.`))
+      return;
+    setPwLoadingId(inv.id);
+    try {
+      const res = await resetPw({ data: { userId: inv.used_by } });
+      setPwInfo({ email: res.email, password: res.tempPassword, name: inv.name });
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Falha ao gerar senha.");
+    } finally {
+      setPwLoadingId(null);
+    }
   };
 
   return (
@@ -211,6 +231,21 @@ function AccessesPage() {
                     <Clock className="size-3" /> Aguardando
                   </span>
                 )}
+                {isAdmin && i.used_by && (
+                  <button
+                    onClick={() => onGeneratePassword(i)}
+                    disabled={pwLoadingId === i.id}
+                    className="flex items-center gap-1 px-2 h-7 rounded-md bg-secondary text-[11px] font-semibold hover:bg-secondary/70 disabled:opacity-60"
+                    title="Gerar nova senha temporária"
+                  >
+                    {pwLoadingId === i.id ? (
+                      <Loader2 className="size-3 animate-spin" />
+                    ) : (
+                      <KeyRound className="size-3" />
+                    )}
+                    Senha
+                  </button>
+                )}
                 <button
                   onClick={() => remove(i.id)}
                   className="size-7 rounded-md hover:bg-destructive/10 text-destructive flex items-center justify-center"
@@ -222,6 +257,59 @@ function AccessesPage() {
             </li>
           ))}
         </ul>
+      )}
+
+      {pwInfo && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-2xl bg-card border border-border p-6 shadow-xl">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <KeyRound className="size-5 text-primary" />
+                <h3 className="font-display font-black">Senha temporária</h3>
+              </div>
+              <button
+                onClick={() => setPwInfo(null)}
+                className="size-7 rounded-md hover:bg-secondary flex items-center justify-center"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">
+              Esta é a única vez que esta senha aparecerá. Anote ou copie e envie para{" "}
+              <strong className="text-foreground">{pwInfo.name}</strong>. Peça para a pessoa
+              entrar e trocar a senha em <span className="font-mono">Meu perfil</span>.
+            </p>
+            <div className="space-y-2">
+              <div>
+                <div className="text-[10px] uppercase text-muted-foreground font-mono mb-1">E-mail</div>
+                <div className="rounded-lg bg-input border border-border px-3 py-2 text-sm font-mono break-all">
+                  {pwInfo.email}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase text-muted-foreground font-mono mb-1">Senha temporária</div>
+                <div className="flex gap-2">
+                  <div className="flex-1 rounded-lg bg-input border border-border px-3 py-2 text-sm font-mono break-all select-all">
+                    {pwInfo.password}
+                  </div>
+                  <button
+                    onClick={() => navigator.clipboard?.writeText(pwInfo.password)}
+                    className="px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 flex items-center gap-1"
+                    title="Copiar"
+                  >
+                    <Copy className="size-3.5" /> Copiar
+                  </button>
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => setPwInfo(null)}
+              className="mt-5 w-full px-4 py-2 rounded-lg bg-secondary text-sm font-semibold hover:bg-secondary/70"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
       )}
     </main>
   );

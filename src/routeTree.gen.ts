@@ -13,6 +13,7 @@ import { Route as RankingRouteImport } from './routes/ranking'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as MinhasComissoesRouteImport } from './routes/minhas-comissoes'
 import { Route as MinhaProgramacaoRouteImport } from './routes/minha-programacao'
+import { Route as MeuDashboardRouteImport } from './routes/meu-dashboard'
 import { Route as MarcaRouteImport } from './routes/marca'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FinanceiroRouteImport } from './routes/financeiro'
@@ -47,6 +48,11 @@ const MinhasComissoesRoute = MinhasComissoesRouteImport.update({
 const MinhaProgramacaoRoute = MinhaProgramacaoRouteImport.update({
   id: '/minha-programacao',
   path: '/minha-programacao',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MeuDashboardRoute = MeuDashboardRouteImport.update({
+  id: '/meu-dashboard',
+  path: '/meu-dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarcaRoute = MarcaRouteImport.update({
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/financeiro': typeof FinanceiroRouteWithChildren
   '/login': typeof LoginRoute
   '/marca': typeof MarcaRoute
+  '/meu-dashboard': typeof MeuDashboardRoute
   '/minha-programacao': typeof MinhaProgramacaoRoute
   '/minhas-comissoes': typeof MinhasComissoesRoute
   '/perfil': typeof PerfilRoute
@@ -158,6 +165,7 @@ export interface FileRoutesByTo {
   '/financeiro': typeof FinanceiroRouteWithChildren
   '/login': typeof LoginRoute
   '/marca': typeof MarcaRoute
+  '/meu-dashboard': typeof MeuDashboardRoute
   '/minha-programacao': typeof MinhaProgramacaoRoute
   '/minhas-comissoes': typeof MinhasComissoesRoute
   '/perfil': typeof PerfilRoute
@@ -180,6 +188,7 @@ export interface FileRoutesById {
   '/financeiro': typeof FinanceiroRouteWithChildren
   '/login': typeof LoginRoute
   '/marca': typeof MarcaRoute
+  '/meu-dashboard': typeof MeuDashboardRoute
   '/minha-programacao': typeof MinhaProgramacaoRoute
   '/minhas-comissoes': typeof MinhasComissoesRoute
   '/perfil': typeof PerfilRoute
@@ -203,6 +212,7 @@ export interface FileRouteTypes {
     | '/financeiro'
     | '/login'
     | '/marca'
+    | '/meu-dashboard'
     | '/minha-programacao'
     | '/minhas-comissoes'
     | '/perfil'
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/financeiro'
     | '/login'
     | '/marca'
+    | '/meu-dashboard'
     | '/minha-programacao'
     | '/minhas-comissoes'
     | '/perfil'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/financeiro'
     | '/login'
     | '/marca'
+    | '/meu-dashboard'
     | '/minha-programacao'
     | '/minhas-comissoes'
     | '/perfil'
@@ -267,6 +279,7 @@ export interface RootRouteChildren {
   FinanceiroRoute: typeof FinanceiroRouteWithChildren
   LoginRoute: typeof LoginRoute
   MarcaRoute: typeof MarcaRoute
+  MeuDashboardRoute: typeof MeuDashboardRoute
   MinhaProgramacaoRoute: typeof MinhaProgramacaoRoute
   MinhasComissoesRoute: typeof MinhasComissoesRoute
   PerfilRoute: typeof PerfilRoute
@@ -302,6 +315,13 @@ declare module '@tanstack/react-router' {
       path: '/minha-programacao'
       fullPath: '/minha-programacao'
       preLoaderRoute: typeof MinhaProgramacaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/meu-dashboard': {
+      id: '/meu-dashboard'
+      path: '/meu-dashboard'
+      fullPath: '/meu-dashboard'
+      preLoaderRoute: typeof MeuDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/marca': {
@@ -441,6 +461,7 @@ const rootRouteChildren: RootRouteChildren = {
   FinanceiroRoute: FinanceiroRouteWithChildren,
   LoginRoute: LoginRoute,
   MarcaRoute: MarcaRoute,
+  MeuDashboardRoute: MeuDashboardRoute,
   MinhaProgramacaoRoute: MinhaProgramacaoRoute,
   MinhasComissoesRoute: MinhasComissoesRoute,
   PerfilRoute: PerfilRoute,
