@@ -12,6 +12,7 @@ import {
 import { fetchMonthlySellers } from "@/lib/monthlyRanking";
 import { RankingHistory } from "@/components/RankingHistory";
 import { fetchEnrollments, createEnrollment } from "@/lib/enrollments";
+import { getPeriodRange } from "@/lib/commissions";
 import { EnrollmentFormDialog } from "@/components/EnrollmentFormDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { Podium } from "@/components/Podium";
@@ -132,13 +133,18 @@ export function RankingView() {
   useEffect(() => {
     if (!isCeoOrAdmin) return;
     let mounted = true;
-    fetchEnrollments()
+
+    const currentMonth = getPeriodRange("month");
+    fetchEnrollments({
+      from: currentMonth.from,
+      to: currentMonth.to,
+      status: "approved",
+    })
       .then((rows) => {
         if (!mounted) return;
         const agg: Record<string, { monthly: number; commission: number }> = {};
         let vgv = 0;
         for (const r of rows) {
-          if (r.status !== "approved") continue;
           const cur = agg[r.sellerId] ?? { monthly: 0, commission: 0 };
           cur.monthly += Number(r.monthlyFee) || 0;
           cur.commission += Number(r.commissionAmount) || 0;
