@@ -31,6 +31,7 @@ import {
 } from "@/lib/storage";
 import { Seller, rankSellers, formatBRL, DEFAULT_GOALS } from "@/lib/ranking";
 import { fetchEnrollments } from "@/lib/enrollments";
+import { getPeriodRange } from "@/lib/commissions";
 import {
   Interview,
   InterviewInput,
@@ -88,7 +89,12 @@ function Fanaticos() {
 
   useEffect(() => {
     if (!isAdmin) return;
-    fetchEnrollments()
+    const currentMonth = getPeriodRange("month");
+    fetchEnrollments({
+      from: currentMonth.from,
+      to: currentMonth.to,
+      status: "approved",
+    })
       .then((rows) => {
         const agg: Record<string, { monthly: number; commission: number }> = {};
         for (const r of rows) {
