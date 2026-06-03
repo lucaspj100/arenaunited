@@ -207,13 +207,14 @@ export function RankingView() {
       weekEnrollments: 0,
       userId: null,
       role: "consultor",
+      directorId: !isStaff && isManager ? userId ?? null : null,
     };
     try {
       const created = await insertSeller(draft);
       setSellers((prev) => [...prev, created]);
     } catch (e) {
       console.error(e);
-      alert("Erro ao adicionar vendedor. Verifique se você está autenticado como admin.");
+      alert("Erro ao adicionar vendedor. Verifique suas permissões.");
     }
   };
 
@@ -490,7 +491,7 @@ export function RankingView() {
                 </div>
               )}
             </div>
-            {isAdmin && (
+            {(isStaff || isManager) && (
               <button
                 onClick={addSeller}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition"

@@ -148,6 +148,7 @@ export async function insertSeller(s: Omit<Seller, "id">): Promise<Seller> {
       week_enrollments: s.weekEnrollments,
       user_id: s.userId ?? null,
       role: s.role,
+      director_id: s.directorId ?? null,
     })
     .select(COLS)
     .single();
