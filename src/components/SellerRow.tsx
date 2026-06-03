@@ -114,7 +114,7 @@ export function SellerRow({
         {!readOnly && (
           <button
             onClick={onDelete}
-            className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition p-1"
+            className="text-muted-foreground hover:text-destructive transition p-1"
             aria-label="Remover"
           >
             <Trash2 className="size-4" />
