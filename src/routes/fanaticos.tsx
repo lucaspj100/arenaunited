@@ -29,6 +29,7 @@ import {
   deleteSellerRow,
   loadLocalConfig,
 } from "@/lib/storage";
+import { fetchMonthlySellers } from "@/lib/monthlyRanking";
 import { Seller, rankSellers, formatBRL, DEFAULT_GOALS } from "@/lib/ranking";
 import { fetchEnrollments } from "@/lib/enrollments";
 import { getPeriodRange } from "@/lib/commissions";
@@ -71,14 +72,14 @@ function Fanaticos() {
 
   useEffect(() => {
     let mounted = true;
-    fetchSellers()
+    fetchMonthlySellers()
       .then((d) => mounted && setSellers(d))
       .catch(console.error)
       .finally(() => mounted && setLoading(false));
     const channel = supabase
       .channel("fanaticos-sync")
       .on("postgres_changes", { event: "*", schema: "public", table: "sellers" }, () => {
-        fetchSellers().then((d) => mounted && setSellers(d)).catch(console.error);
+        fetchMonthlySellers().then((d) => mounted && setSellers(d)).catch(console.error);
       })
       .subscribe();
     return () => {
@@ -160,7 +161,7 @@ function Fanaticos() {
     } catch (e) {
       console.error(e);
       alert("Não foi possível salvar: " + ((e as Error)?.message ?? "erro"));
-      fetchSellers().then(setSellers).catch(console.error);
+      fetchMonthlySellers().then(setSellers).catch(console.error);
     }
   };
 
