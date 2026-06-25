@@ -17,7 +17,7 @@ export const Route = createFileRoute("/integracoes")({
   head: () => ({ meta: [{ title: "Integrações CRM — Arena United" }] }),
 });
 
-type Link = {
+type CrmLink = {
   id: string;
   crm_user_id: string;
   arena_seller_id: string;
@@ -94,7 +94,7 @@ function LinksTab() {
   const update = useServerFn(updateCrmLink);
   const remove = useServerFn(deleteCrmLink);
 
-  const [links, setLinks] = useState<Link[]>([]);
+  const [links, setLinks] = useState<CrmLink[]>([]);
   const [sellers, setSellers] = useState<SellerLite[]>([]);
   const [loading, setLoading] = useState(true);
   const [crmUserId, setCrmUserId] = useState("");
@@ -115,7 +115,7 @@ function LinksTab() {
         list(),
         supabase.from("sellers").select("id, name").order("name"),
       ]);
-      setLinks(ls as Link[]);
+      setLinks(ls as CrmLink[]);
       setSellers((ss ?? []) as SellerLite[]);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Erro ao carregar.");
@@ -145,12 +145,12 @@ function LinksTab() {
     }
   };
 
-  const toggle = async (l: Link) => {
+  const toggle = async (l: CrmLink) => {
     await update({ data: { id: l.id, active: !l.active } });
     await load();
   };
 
-  const onDelete = async (l: Link) => {
+  const onDelete = async (l: CrmLink) => {
     if (!confirm("Remover este vínculo?")) return;
     await remove({ data: { id: l.id } });
     await load();

@@ -16,6 +16,7 @@ import { Route as MinhaProgramacaoRouteImport } from './routes/minha-programacao
 import { Route as MeuDashboardRouteImport } from './routes/meu-dashboard'
 import { Route as MarcaRouteImport } from './routes/marca'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as IntegracoesRouteImport } from './routes/integracoes'
 import { Route as FinanceiroRouteImport } from './routes/financeiro'
 import { Route as FanaticosRouteImport } from './routes/fanaticos'
 import { Route as EquipeRouteImport } from './routes/equipe'
@@ -64,6 +65,11 @@ const MarcaRoute = MarcaRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IntegracoesRoute = IntegracoesRouteImport.update({
+  id: '/integracoes',
+  path: '/integracoes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FinanceiroRoute = FinanceiroRouteImport.update({
@@ -147,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/equipe': typeof EquipeRoute
   '/fanaticos': typeof FanaticosRoute
   '/financeiro': typeof FinanceiroRouteWithChildren
+  '/integracoes': typeof IntegracoesRoute
   '/login': typeof LoginRoute
   '/marca': typeof MarcaRoute
   '/meu-dashboard': typeof MeuDashboardRoute
@@ -170,6 +177,7 @@ export interface FileRoutesByTo {
   '/equipe': typeof EquipeRoute
   '/fanaticos': typeof FanaticosRoute
   '/financeiro': typeof FinanceiroRouteWithChildren
+  '/integracoes': typeof IntegracoesRoute
   '/login': typeof LoginRoute
   '/marca': typeof MarcaRoute
   '/meu-dashboard': typeof MeuDashboardRoute
@@ -194,6 +202,7 @@ export interface FileRoutesById {
   '/equipe': typeof EquipeRoute
   '/fanaticos': typeof FanaticosRoute
   '/financeiro': typeof FinanceiroRouteWithChildren
+  '/integracoes': typeof IntegracoesRoute
   '/login': typeof LoginRoute
   '/marca': typeof MarcaRoute
   '/meu-dashboard': typeof MeuDashboardRoute
@@ -219,6 +228,7 @@ export interface FileRouteTypes {
     | '/equipe'
     | '/fanaticos'
     | '/financeiro'
+    | '/integracoes'
     | '/login'
     | '/marca'
     | '/meu-dashboard'
@@ -242,6 +252,7 @@ export interface FileRouteTypes {
     | '/equipe'
     | '/fanaticos'
     | '/financeiro'
+    | '/integracoes'
     | '/login'
     | '/marca'
     | '/meu-dashboard'
@@ -265,6 +276,7 @@ export interface FileRouteTypes {
     | '/equipe'
     | '/fanaticos'
     | '/financeiro'
+    | '/integracoes'
     | '/login'
     | '/marca'
     | '/meu-dashboard'
@@ -289,6 +301,7 @@ export interface RootRouteChildren {
   EquipeRoute: typeof EquipeRoute
   FanaticosRoute: typeof FanaticosRoute
   FinanceiroRoute: typeof FinanceiroRouteWithChildren
+  IntegracoesRoute: typeof IntegracoesRoute
   LoginRoute: typeof LoginRoute
   MarcaRoute: typeof MarcaRoute
   MeuDashboardRoute: typeof MeuDashboardRoute
@@ -349,6 +362,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/integracoes': {
+      id: '/integracoes'
+      path: '/integracoes'
+      fullPath: '/integracoes'
+      preLoaderRoute: typeof IntegracoesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/financeiro': {
@@ -479,6 +499,7 @@ const rootRouteChildren: RootRouteChildren = {
   EquipeRoute: EquipeRoute,
   FanaticosRoute: FanaticosRoute,
   FinanceiroRoute: FinanceiroRouteWithChildren,
+  IntegracoesRoute: IntegracoesRoute,
   LoginRoute: LoginRoute,
   MarcaRoute: MarcaRoute,
   MeuDashboardRoute: MeuDashboardRoute,
