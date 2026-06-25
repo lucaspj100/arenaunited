@@ -29,6 +29,7 @@ import { Route as FinanceiroGeralRouteImport } from './routes/financeiro.geral'
 import { Route as FinanceiroEquipesRouteImport } from './routes/financeiro.equipes'
 import { Route as FinanceiroConfigRouteImport } from './routes/financeiro.config'
 import { Route as FinanceiroVendedorSellerIdRouteImport } from './routes/financeiro.vendedor.$sellerId'
+import { Route as ApiPublicCrmWebhookRouteImport } from './routes/api/public/crm-webhook'
 
 const RankingRoute = RankingRouteImport.update({
   id: '/ranking',
@@ -131,6 +132,11 @@ const FinanceiroVendedorSellerIdRoute =
     path: '/vendedor/$sellerId',
     getParentRoute: () => FinanceiroRoute,
   } as any)
+const ApiPublicCrmWebhookRoute = ApiPublicCrmWebhookRouteImport.update({
+  id: '/api/public/crm-webhook',
+  path: '/api/public/crm-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -152,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/financeiro/equipes': typeof FinanceiroEquipesRoute
   '/financeiro/geral': typeof FinanceiroGeralRoute
   '/vendedor/$sellerId': typeof VendedorSellerIdRoute
+  '/api/public/crm-webhook': typeof ApiPublicCrmWebhookRoute
   '/financeiro/vendedor/$sellerId': typeof FinanceiroVendedorSellerIdRoute
 }
 export interface FileRoutesByTo {
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/financeiro/equipes': typeof FinanceiroEquipesRoute
   '/financeiro/geral': typeof FinanceiroGeralRoute
   '/vendedor/$sellerId': typeof VendedorSellerIdRoute
+  '/api/public/crm-webhook': typeof ApiPublicCrmWebhookRoute
   '/financeiro/vendedor/$sellerId': typeof FinanceiroVendedorSellerIdRoute
 }
 export interface FileRoutesById {
@@ -197,6 +205,7 @@ export interface FileRoutesById {
   '/financeiro/equipes': typeof FinanceiroEquipesRoute
   '/financeiro/geral': typeof FinanceiroGeralRoute
   '/vendedor/$sellerId': typeof VendedorSellerIdRoute
+  '/api/public/crm-webhook': typeof ApiPublicCrmWebhookRoute
   '/financeiro/vendedor/$sellerId': typeof FinanceiroVendedorSellerIdRoute
 }
 export interface FileRouteTypes {
@@ -221,6 +230,7 @@ export interface FileRouteTypes {
     | '/financeiro/equipes'
     | '/financeiro/geral'
     | '/vendedor/$sellerId'
+    | '/api/public/crm-webhook'
     | '/financeiro/vendedor/$sellerId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -243,6 +253,7 @@ export interface FileRouteTypes {
     | '/financeiro/equipes'
     | '/financeiro/geral'
     | '/vendedor/$sellerId'
+    | '/api/public/crm-webhook'
     | '/financeiro/vendedor/$sellerId'
   id:
     | '__root__'
@@ -265,6 +276,7 @@ export interface FileRouteTypes {
     | '/financeiro/equipes'
     | '/financeiro/geral'
     | '/vendedor/$sellerId'
+    | '/api/public/crm-webhook'
     | '/financeiro/vendedor/$sellerId'
   fileRoutesById: FileRoutesById
 }
@@ -285,6 +297,7 @@ export interface RootRouteChildren {
   PerfilRoute: typeof PerfilRoute
   RankingRoute: typeof RankingRoute
   VendedorSellerIdRoute: typeof VendedorSellerIdRoute
+  ApiPublicCrmWebhookRoute: typeof ApiPublicCrmWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -429,6 +442,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FinanceiroVendedorSellerIdRouteImport
       parentRoute: typeof FinanceiroRoute
     }
+    '/api/public/crm-webhook': {
+      id: '/api/public/crm-webhook'
+      path: '/api/public/crm-webhook'
+      fullPath: '/api/public/crm-webhook'
+      preLoaderRoute: typeof ApiPublicCrmWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -467,6 +487,7 @@ const rootRouteChildren: RootRouteChildren = {
   PerfilRoute: PerfilRoute,
   RankingRoute: RankingRoute,
   VendedorSellerIdRoute: VendedorSellerIdRoute,
+  ApiPublicCrmWebhookRoute: ApiPublicCrmWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

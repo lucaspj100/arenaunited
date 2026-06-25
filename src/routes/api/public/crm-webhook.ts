@@ -106,7 +106,7 @@ export const Route = createFileRoute("/api/public/crm-webhook")({
             event_type: payload.event_type,
             crm_lead_id: payload.crm_lead_id,
             crm_user_id: payload.crm_user_id,
-            payload: payload as unknown as Record<string, unknown>,
+            payload: payload as any,
             status: "received",
           })
           .select("id")
