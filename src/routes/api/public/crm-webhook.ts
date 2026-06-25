@@ -108,14 +108,14 @@ export const Route = createFileRoute("/api/public/crm-webhook")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        // 1. Cria log inicial
+        // 1. Cria log inicial (já registrando qual header foi usado na validação)
         const { data: logRow, error: logErr } = await supabaseAdmin
           .from("crm_integration_events")
           .insert({
             event_type: payload.event_type,
             crm_lead_id: payload.crm_lead_id,
             crm_user_id: payload.crm_user_id,
-            payload: payload as any,
+            payload: { ...payload, _validation_header_used: headerName } as any,
             status: "received",
           })
           .select("id")
@@ -142,6 +142,18 @@ export const Route = createFileRoute("/api/public/crm-webhook")({
             })
             .eq("id", logId);
         };
+
+        // 2. Valida assinatura (tenta X-CRM-Signature primeiro, depois X-Webhook-Signature)
+        if (!verifySignature(rawBody, signatureValue, secret)) {
+          await finalize("error", {
+            error: `invalid_signature (header: ${headerName ?? "none"})`,
+          });
+          return new Response(JSON.stringify({ error: "invalid_signature" }), {
+            status: 401,
+            headers: cors,
+          });
+        }
+
 
         try {
           // 2. Procura vínculo ativo
