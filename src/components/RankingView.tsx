@@ -327,6 +327,9 @@ export function RankingView() {
               <Link to="/acessos" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
                 Acessos
               </Link>
+              <Link to="/integracoes" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
+                Integrações
+              </Link>
               <Link to="/agenda-equipe" className="px-3 py-2 rounded-lg bg-secondary text-xs font-semibold hover:bg-secondary/70">
                 Agenda da Equipe
               </Link>
