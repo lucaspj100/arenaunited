@@ -27,10 +27,25 @@ const PayloadSchema = z.object({
 
 type Payload = z.infer<typeof PayloadSchema>;
 
-function verifySignature(rawBody: string, signature: string | null, secret: string): boolean {
-  if (!signature) return false;
+function extractSignatureHeader(request: Request): {
+  headerName: "x-crm-signature" | "x-webhook-signature" | null;
+  signatureValue: string | null;
+} {
+  const headerNames = ["x-crm-signature", "x-webhook-signature"] as const;
+  for (const name of headerNames) {
+    const raw = request.headers.get(name);
+    if (raw) {
+      const value = raw.startsWith("sha256=") ? raw.slice(7) : raw;
+      return { headerName: name, signatureValue: value };
+    }
+  }
+  return { headerName: null, signatureValue: null };
+}
+
+function verifySignature(rawBody: string, signatureValue: string | null, secret: string): boolean {
+  if (!signatureValue) return false;
   const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
-  const sig = Buffer.from(signature.trim());
+  const sig = Buffer.from(signatureValue.trim());
   const exp = Buffer.from(expected);
   if (sig.length !== exp.length) return false;
   try {
