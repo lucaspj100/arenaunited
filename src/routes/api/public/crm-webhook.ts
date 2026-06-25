@@ -156,7 +156,7 @@ export const Route = createFileRoute("/api/public/crm-webhook")({
 
 
         try {
-          // 2. Procura vínculo ativo
+          // 3. Procura vínculo ativo
           const { data: link } = await supabaseAdmin
             .from("crm_arena_seller_links")
             .select("arena_seller_id")
