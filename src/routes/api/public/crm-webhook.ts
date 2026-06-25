@@ -86,6 +86,8 @@ export const Route = createFileRoute("/api/public/crm-webhook")({
 
         const rawBody = await request.text();
         const { headerName, signatureValue } = extractSignatureHeader(request);
+
+        let json: unknown;
         try {
           json = JSON.parse(rawBody);
         } catch {
