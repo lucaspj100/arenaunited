@@ -34,7 +34,7 @@ import {
   Users,
 } from "lucide-react";
 
-type Filter = "hoje" | "amanha" | "semana";
+type Filter = "hoje" | "amanha" | "semana" | "proximas";
 
 export const Route = createFileRoute("/agenda-equipe")({
   beforeLoad: async () => {
@@ -68,9 +68,17 @@ function AgendaEquipe() {
   const reload = async () => {
     setLoading(true);
     try {
-      const week = weekRangeISO();
+      // Carrega janela ampla: 14 dias atrás até 120 dias à frente,
+      // para incluir entrevistas futuras (não só desta semana).
+      const today = new Date();
+      const past = new Date(today);
+      past.setDate(today.getDate() - 14);
+      const future = new Date(today);
+      future.setDate(today.getDate() + 120);
+      const fmt = (d: Date) =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
       const [iv, sl] = await Promise.all([
-        fetchInterviews({ from: week.start, to: week.end }),
+        fetchInterviews({ from: fmt(past), to: fmt(future) }),
         fetchSellers(),
       ]);
       setInterviews(iv);
@@ -102,6 +110,7 @@ function AgendaEquipe() {
       if (filter === "amanha" && i.scheduledDate !== tomorrow) return false;
       if (filter === "semana" && (i.scheduledDate < week.start || i.scheduledDate > week.end))
         return false;
+      if (filter === "proximas" && i.scheduledDate < today) return false;
       if (sellerFilter !== "all" && i.sellerId !== sellerFilter) return false;
       if (statusFilter !== "all" && i.status !== statusFilter) return false;
       return true;
@@ -254,7 +263,7 @@ function AgendaEquipe() {
       <section className="rounded-2xl border border-border bg-card p-4 mb-6">
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex rounded-lg bg-secondary p-1">
-            {(["hoje", "amanha", "semana"] as Filter[]).map((f) => (
+            {(["hoje", "amanha", "semana", "proximas"] as Filter[]).map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
@@ -262,7 +271,13 @@ function AgendaEquipe() {
                   filter === f ? "bg-primary text-primary-foreground" : "hover:bg-background/40"
                 }`}
               >
-                {f === "amanha" ? "Amanhã" : f === "semana" ? "Esta semana" : "Hoje"}
+                {f === "amanha"
+                  ? "Amanhã"
+                  : f === "semana"
+                    ? "Esta semana"
+                    : f === "proximas"
+                      ? "Próximas"
+                      : "Hoje"}
               </button>
             ))}
           </div>
