@@ -85,15 +85,7 @@ export const Route = createFileRoute("/api/public/crm-webhook")({
         }
 
         const rawBody = await request.text();
-        const signature = request.headers.get("x-crm-signature");
-        if (!verifySignature(rawBody, signature, secret)) {
-          return new Response(JSON.stringify({ error: "invalid_signature" }), {
-            status: 401,
-            headers: cors,
-          });
-        }
-
-        let json: unknown;
+        const { headerName, signatureValue } = extractSignatureHeader(request);
         try {
           json = JSON.parse(rawBody);
         } catch {
