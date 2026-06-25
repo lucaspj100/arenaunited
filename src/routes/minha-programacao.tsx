@@ -57,6 +57,13 @@ function MinhaProgramacao() {
     setLoading(true);
     try {
       const data = await fetchInterviews({ sellerId: sid });
+      console.log("[MinhaProgramacao] debug", {
+        userId,
+        sellerIdFromHook: sellerId,
+        sidUsadoNaQuery: sid,
+        totalRetornado: data.length,
+        datas: data.map((i) => ({ id: i.id, date: i.scheduledDate, lead: i.leadName })),
+      });
       setInterviews(data);
     } catch (e) {
       console.error(e);
