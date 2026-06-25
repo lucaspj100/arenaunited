@@ -68,7 +68,7 @@ export const Route = createFileRoute("/api/public/crm-webhook")({
           headers: {
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "POST, OPTIONS",
-            "Access-Control-Allow-Headers": "content-type, x-crm-signature",
+            "Access-Control-Allow-Headers": "content-type, x-crm-signature, x-webhook-signature",
           },
         }),
       POST: async ({ request }) => {
