@@ -31,9 +31,7 @@ const toInterview = (r: InterviewRow) => ({
 export const getMyProgramacaoData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    const { data: seller, error: sellerError } = await supabaseAdmin
+    const { data: seller, error: sellerError } = await context.supabase
       .from("sellers")
       .select("id, name, user_id")
       .eq("user_id", context.userId)
@@ -58,7 +56,7 @@ export const getMyProgramacaoData = createServerFn({ method: "GET" })
       };
     }
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await context.supabase
       .from("interviews")
       .select("id,seller_id,lead_name,lead_phone,scheduled_date,scheduled_time,status,notes,created_at,updated_at")
       .eq("seller_id", seller.id)
