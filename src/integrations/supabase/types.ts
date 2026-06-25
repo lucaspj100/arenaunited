@@ -68,6 +68,130 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_arena_seller_links: {
+        Row: {
+          active: boolean
+          arena_seller_id: string
+          created_at: string
+          crm_user_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          arena_seller_id: string
+          created_at?: string
+          crm_user_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          arena_seller_id?: string
+          created_at?: string
+          crm_user_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_arena_seller_links_arena_seller_id_fkey"
+            columns: ["arena_seller_id"]
+            isOneToOne: false
+            referencedRelation: "latest_approved_enrollment"
+            referencedColumns: ["seller_id"]
+          },
+          {
+            foreignKeyName: "crm_arena_seller_links_arena_seller_id_fkey"
+            columns: ["arena_seller_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_seller_stats"
+            referencedColumns: ["seller_id"]
+          },
+          {
+            foreignKeyName: "crm_arena_seller_links_arena_seller_id_fkey"
+            columns: ["arena_seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_arena_seller_links_arena_seller_id_fkey"
+            columns: ["arena_seller_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_seller_stats"
+            referencedColumns: ["seller_id"]
+          },
+        ]
+      }
+      crm_integration_events: {
+        Row: {
+          arena_seller_id: string | null
+          created_at: string
+          crm_lead_id: string | null
+          crm_user_id: string | null
+          error_message: string | null
+          event_type: string
+          id: string
+          payload: Json
+          processed_at: string | null
+          status: string
+        }
+        Insert: {
+          arena_seller_id?: string | null
+          created_at?: string
+          crm_lead_id?: string | null
+          crm_user_id?: string | null
+          error_message?: string | null
+          event_type: string
+          id?: string
+          payload?: Json
+          processed_at?: string | null
+          status?: string
+        }
+        Update: {
+          arena_seller_id?: string | null
+          created_at?: string
+          crm_lead_id?: string | null
+          crm_user_id?: string | null
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_integration_events_arena_seller_id_fkey"
+            columns: ["arena_seller_id"]
+            isOneToOne: false
+            referencedRelation: "latest_approved_enrollment"
+            referencedColumns: ["seller_id"]
+          },
+          {
+            foreignKeyName: "crm_integration_events_arena_seller_id_fkey"
+            columns: ["arena_seller_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_seller_stats"
+            referencedColumns: ["seller_id"]
+          },
+          {
+            foreignKeyName: "crm_integration_events_arena_seller_id_fkey"
+            columns: ["arena_seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_integration_events_arena_seller_id_fkey"
+            columns: ["arena_seller_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_seller_stats"
+            referencedColumns: ["seller_id"]
+          },
+        ]
+      }
       enrollments: {
         Row: {
           approved_at: string | null
@@ -75,6 +199,7 @@ export type Database = {
           commission_amount: number
           commission_rate: number
           created_at: string
+          crm_lead_id: string | null
           enrollment_date: string
           enrollment_value: number
           id: string
@@ -94,6 +219,7 @@ export type Database = {
           commission_amount?: number
           commission_rate?: number
           created_at?: string
+          crm_lead_id?: string | null
           enrollment_date: string
           enrollment_value?: number
           id?: string
@@ -113,6 +239,7 @@ export type Database = {
           commission_amount?: number
           commission_rate?: number
           created_at?: string
+          crm_lead_id?: string | null
           enrollment_date?: string
           enrollment_value?: number
           id?: string
@@ -208,6 +335,7 @@ export type Database = {
       interviews: {
         Row: {
           created_at: string
+          crm_lead_id: string | null
           id: string
           lead_name: string
           lead_phone: string | null
@@ -220,6 +348,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          crm_lead_id?: string | null
           id?: string
           lead_name: string
           lead_phone?: string | null
@@ -232,6 +361,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          crm_lead_id?: string | null
           id?: string
           lead_name?: string
           lead_phone?: string | null

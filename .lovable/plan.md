@@ -1,41 +1,110 @@
-## O que vai mudar
+# Integração Arena ← Funil Pro (CRM)
 
-### 1. Acessos — ADM gera senha temporária
+Objetivo: receber eventos comerciais do Funil Pro via webhook seguro, atualizar agenda/matrículas apenas para vendedores **vinculados**, e nunca quebrar o fluxo manual atual da Arena.
 
-Na página **Acessos**, apenas para o ADM, vai aparecer ao lado de cada usuário cadastrado:
-- O **e-mail** de login (já é visível hoje).
-- Um botão **"Gerar senha temporária"** que cria uma nova senha aleatória, mostra **uma única vez** na tela (com botão de copiar) e já a aplica na conta do usuário.
-- Depois de fechar o aviso, a senha não pode mais ser vista (fica criptografada no banco, como exige a segurança).
+---
 
-Importante: o sistema não consegue mostrar a senha que o usuário escolheu — só a **nova** que o ADM acabou de gerar. Esse é o padrão usado por bancos, Google, etc.
+## 1. Banco de dados (migration)
 
-### 2. Diretor e Franqueado entram no ranking
+### Tabela `crm_arena_seller_links`
+Vincula um `crm_user_id` (UUID do usuário no Funil Pro) a um vendedor da Arena.
+- `id`, `crm_user_id` (uuid, unique), `arena_seller_id` (fk sellers, on delete cascade)
+- `active` (bool, default true), `created_at`, `updated_at`
+- Índice único parcial: apenas um vínculo ativo por `crm_user_id`.
 
-- Na página de **Ranking** (ou no Perfil), diretor e franqueado que ainda não estão no ranking veem um botão **"Participar do ranking"** que cria o perfil de competidor deles (como consultor ou gerente, à escolha).
-- Eles passam a aparecer junto com os outros vendedores no ranking mensal, com suas próprias matrículas, material e conversões.
-- Cada gestor pode **editar suas próprias metas** (matrículas e material do mês) direto no perfil dele — mesmo que ele seja diretor/franqueado.
+### Tabela `crm_integration_events`
+Log auditável de tudo que entra pelo webhook.
+- `id`, `event_type` (text), `crm_lead_id` (text), `crm_user_id` (uuid),
+  `arena_seller_id` (uuid, nullable), `payload` (jsonb),
+  `status` (text: `received` | `processed` | `ignored` | `error`),
+  `error_message` (text, nullable), `created_at`, `processed_at`
+- Índice em `crm_lead_id`, `event_type`, `created_at`.
 
-### 3. Dashboard do gestor (versão equipe)
+### Coluna em `interviews` e `enrollments`
+- `crm_lead_id text` (nullable, indexado) — permite deduplicação e UPSERT por lead.
 
-Vai existir uma página **"Meu Dashboard"** específica para diretor/franqueado com o mesmo visual do dashboard do vendedor, mas com foco em equipe:
+### RLS / GRANT
+- `crm_arena_seller_links`: leitura/escrita apenas por staff (admin/diretor/ceo/presidente). `service_role` total.
+- `crm_integration_events`: leitura por staff. Escrita apenas via `service_role`.
 
-- **Resumo pessoal**: matrículas, material, conversão e progresso de meta do próprio gestor (caso ele esteja no ranking).
-- **Resumo da equipe**: total de matrículas, material vendido, entrevistas marcadas/realizadas e ticket médio do mês — somando todos os liderados.
-- **Ranking dos liderados**: lista compacta dos vendedores da equipe ordenada por matrículas no mês.
-- **Programação semanal da equipe**: link rápido para a agenda da equipe.
-- **Rituais do dia**: mesmo bloco motivacional que o vendedor tem.
+---
 
-## Detalhes técnicos
+## 2. Endpoint público seguro
 
-**Banco:**
-- Ajustar `claim_seller_profile()` para aceitar também `diretor`, `ceo`, `presidente` e `franqueado` (hoje só aceita vendedor/franqueado).
-- Ajustar o trigger `enforce_seller_update_scope` para permitir que o **próprio dono** do registro (gestor ou vendedor) edite `goal_deals` e `goal_material`.
-- Nova função `admin_reset_user_password(user_id)` (security definer, apenas `is_admin`) que gera senha aleatória de 12 caracteres, atualiza via `auth.admin.updateUserById` e retorna a senha em texto puro **uma única vez**. Implementada como **server function** (`createServerFn`) com `supabaseAdmin` para chamar a API admin do Supabase.
+Rota TanStack: `src/routes/api/public/crm-webhook.ts` (POST).
 
-**Frontend:**
-- `src/lib/adminUsers.functions.ts` — server function `resetUserPassword` (admin only).
-- `src/routes/acessos.tsx` — botão "Gerar senha temporária" + dialog para mostrar senha uma vez (só admin).
-- `src/components/RankingView.tsx` ou `src/routes/perfil.tsx` — botão "Participar do ranking" para gestores sem perfil de seller.
-- `src/components/EditSellerDialog.tsx` ou `src/routes/perfil.tsx` — liberar campo de metas para o próprio gestor.
-- `src/routes/meu-dashboard.tsx` (nova) — dashboard com foco em equipe; rota disponível para diretor/franqueado.
-- Link no menu/AuthBar para "Meu Dashboard" quando o usuário for gestor.
+Segurança:
+- Header `x-crm-signature`: HMAC-SHA256 do raw body usando segredo `CRM_WEBHOOK_SECRET` (gerado via `generate_secret`).
+- Comparação `timingSafeEqual`.
+- Validação de payload com Zod.
+- Usa `supabaseAdmin` (carregado dentro do handler).
+
+Fluxo do handler:
+1. Verificar assinatura → 401 se inválida.
+2. Validar payload.
+3. Inserir log `crm_integration_events` com status `received`.
+4. Buscar vínculo ativo por `crm_user_id`. Se não houver → atualizar log para `ignored`, retornar 200 (não erra do lado do CRM).
+5. Despachar por `event_type` para o handler correspondente.
+6. Atualizar log para `processed` + `processed_at`, ou `error` + `error_message`.
+
+### Mapeamento de eventos
+| event_type | Ação na Arena |
+|---|---|
+| `crm_interview_scheduled` | UPSERT `interviews` por `crm_lead_id` (status `marcada`) |
+| `crm_interview_done` | UPSERT `interviews` (status `realizada`) |
+| `crm_interview_no_show` | UPDATE `interviews` por `crm_lead_id` → `nao_compareceu` |
+| `crm_interview_rescheduled` | UPDATE data/hora + status `reagendada` |
+| `crm_enrollment_created` | INSERT em `enrollments` se não existir matrícula com mesmo `crm_lead_id`; marca entrevista relacionada como `fechada` |
+| `crm_lost_after_interview` | UPDATE entrevista relacionada → `perdida` |
+
+Deduplicação:
+- Entrevistas: chave única parcial `(arena_seller_id, crm_lead_id)` quando `crm_lead_id` não nulo → UPSERT seguro.
+- Matrículas: idem; segundo evento `enrollment_created` para o mesmo lead é ignorado (já existe).
+
+---
+
+## 3. UI administrativa
+
+Nova rota `src/routes/integracoes.tsx` (acesso apenas staff), com 2 abas:
+
+### Aba "Vínculos CRM"
+- Lista vínculos (`crm_user_id` ↔ vendedor da Arena, status ativo/inativo).
+- Form: input `crm_user_id` + select de vendedor + toggle ativo → criar.
+- Toggle ativo/inativo inline + botão remover.
+
+### Aba "Logs da integração"
+- Tabela paginada (mais recentes primeiro) com filtros por `status` e `event_type`.
+- Colunas: data, evento, lead, vendedor, status, erro (se houver).
+- Botão "Ver payload" → dialog com JSON.
+
+Acesso via `createServerFn` + `requireSupabaseAuth` (verifica `is_staff`).
+
+Link no menu lateral/AuthBar visível apenas para staff.
+
+---
+
+## 4. Garantias de não-regressão
+
+- Nenhuma alteração em fluxos manuais existentes (`interviews`, `enrollments`, `sellers`, ranking).
+- Apenas **adicionamos** coluna `crm_lead_id` nullable (não afeta inserts manuais).
+- Vendedores sem vínculo em `crm_arena_seller_links` continuam 100% manuais — eventos do CRM para eles são logados como `ignored` e ignorados.
+- Triggers existentes (`enforce_*`, `enrollments_apply_commission`) continuam funcionando — o webhook usa `service_role` mas respeita a lógica de comissão recalculada pelo trigger.
+
+---
+
+## 5. Detalhes técnicos
+
+- Segredo: `CRM_WEBHOOK_SECRET` gerado via `generate_secret` (64 chars).
+- URL estável para o Funil Pro: `https://arenaunited.lovable.app/api/public/crm-webhook`.
+- Documentação: incluo um README curto em `docs/crm-integration.md` com exemplo de payload, formato da assinatura e exemplo de curl para o time do Funil Pro testar.
+
+---
+
+## Posso aplicar?
+Se confirmar, executo nesta ordem:
+1. Migration (tabelas + colunas + RLS + GRANTs).
+2. Gerar `CRM_WEBHOOK_SECRET`.
+3. Criar rota webhook + server functions de admin.
+4. Criar UI `/integracoes` com as duas abas.
+5. Adicionar link de menu para staff.
+6. Doc curta para o time do Funil Pro.
