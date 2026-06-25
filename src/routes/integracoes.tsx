@@ -344,8 +344,16 @@ function LogsTab() {
                   <td className="px-4 py-2 font-mono text-xs">{r.event_type}</td>
                   <td className="px-4 py-2 font-mono text-xs">{r.crm_lead_id ?? "—"}</td>
                   <td className="px-4 py-2">{statusBadge(r.status)}</td>
-                  <td className="px-4 py-2 text-xs text-destructive truncate max-w-[260px]" title={r.error_message ?? ""}>
-                    {r.error_message ?? ""}
+                  <td className="px-4 py-2 text-xs truncate max-w-[320px]" title={r.error_message ?? ""}>
+                    {r.error_message === "no_active_link" ? (
+                      <span className="text-amber-500">
+                        Evento recebido, mas ignorado porque este usuário do CRM não está vinculado a nenhum vendedor da Arena.
+                      </span>
+                    ) : r.error_message ? (
+                      <span className="text-destructive">{r.error_message}</span>
+                    ) : (
+                      ""
+                    )}
                   </td>
                   <td className="px-4 py-2 text-right">
                     <button
