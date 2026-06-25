@@ -27,10 +27,25 @@ const PayloadSchema = z.object({
 
 type Payload = z.infer<typeof PayloadSchema>;
 
-function verifySignature(rawBody: string, signature: string | null, secret: string): boolean {
-  if (!signature) return false;
+function extractSignatureHeader(request: Request): {
+  headerName: "x-crm-signature" | "x-webhook-signature" | null;
+  signatureValue: string | null;
+} {
+  const headerNames = ["x-crm-signature", "x-webhook-signature"] as const;
+  for (const name of headerNames) {
+    const raw = request.headers.get(name);
+    if (raw) {
+      const value = raw.startsWith("sha256=") ? raw.slice(7) : raw;
+      return { headerName: name, signatureValue: value };
+    }
+  }
+  return { headerName: null, signatureValue: null };
+}
+
+function verifySignature(rawBody: string, signatureValue: string | null, secret: string): boolean {
+  if (!signatureValue) return false;
   const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
-  const sig = Buffer.from(signature.trim());
+  const sig = Buffer.from(signatureValue.trim());
   const exp = Buffer.from(expected);
   if (sig.length !== exp.length) return false;
   try {
@@ -53,7 +68,7 @@ export const Route = createFileRoute("/api/public/crm-webhook")({
           headers: {
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "POST, OPTIONS",
-            "Access-Control-Allow-Headers": "content-type, x-crm-signature",
+            "Access-Control-Allow-Headers": "content-type, x-crm-signature, x-webhook-signature",
           },
         }),
       POST: async ({ request }) => {
@@ -70,13 +85,7 @@ export const Route = createFileRoute("/api/public/crm-webhook")({
         }
 
         const rawBody = await request.text();
-        const signature = request.headers.get("x-crm-signature");
-        if (!verifySignature(rawBody, signature, secret)) {
-          return new Response(JSON.stringify({ error: "invalid_signature" }), {
-            status: 401,
-            headers: cors,
-          });
-        }
+        const { headerName, signatureValue } = extractSignatureHeader(request);
 
         let json: unknown;
         try {
@@ -99,14 +108,14 @@ export const Route = createFileRoute("/api/public/crm-webhook")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        // 1. Cria log inicial
+        // 1. Cria log inicial (já registrando qual header foi usado na validação)
         const { data: logRow, error: logErr } = await supabaseAdmin
           .from("crm_integration_events")
           .insert({
             event_type: payload.event_type,
             crm_lead_id: payload.crm_lead_id,
             crm_user_id: payload.crm_user_id,
-            payload: payload as any,
+            payload: { ...payload, _validation_header_used: headerName } as any,
             status: "received",
           })
           .select("id")
@@ -134,8 +143,20 @@ export const Route = createFileRoute("/api/public/crm-webhook")({
             .eq("id", logId);
         };
 
+        // 2. Valida assinatura (tenta X-CRM-Signature primeiro, depois X-Webhook-Signature)
+        if (!verifySignature(rawBody, signatureValue, secret)) {
+          await finalize("error", {
+            error: `invalid_signature (header: ${headerName ?? "none"})`,
+          });
+          return new Response(JSON.stringify({ error: "invalid_signature" }), {
+            status: 401,
+            headers: cors,
+          });
+        }
+
+
         try {
-          // 2. Procura vínculo ativo
+          // 3. Procura vínculo ativo
           const { data: link } = await supabaseAdmin
             .from("crm_arena_seller_links")
             .select("arena_seller_id")
