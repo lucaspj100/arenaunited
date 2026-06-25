@@ -1,4 +1,5 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -10,11 +11,11 @@ import {
   InterviewInput,
   createInterview,
   deleteInterview,
-  fetchInterviews,
   todayISO,
   tomorrowISO,
   updateInterview,
 } from "@/lib/interviews";
+import { getMyProgramacaoData } from "@/lib/myProgramacao.functions";
 import { ArrowLeft, CalendarDays, CheckCircle2, Loader2, Pencil, Plus, Trophy } from "lucide-react";
 import {
   addMonths,
@@ -46,35 +47,67 @@ export const Route = createFileRoute("/minha-programacao")({
 
 function MinhaProgramacao() {
   const { loading: loadingUser, role, sellerId, userId, email } = useCurrentUser();
+  const loadMyProgramacao = useServerFn(getMyProgramacaoData);
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Interview | null>(null);
   const [creating, setCreating] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(() => startOfMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [serverSellerId, setServerSellerId] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<{
+    userId: string | null;
+    sellerId: string | null;
+    interviewsCount: number;
+    camillaSellerId: string | null;
+    camilla: {
+      id: string;
+      sellerId: string;
+      leadName: string;
+      scheduledDate: string;
+      scheduledTime: string;
+      status: string;
+    } | null;
+  } | null>(null);
 
-  const reload = async (sid: string) => {
+  const effectiveSellerId = serverSellerId ?? sellerId;
+
+  const reload = async () => {
     setLoading(true);
     try {
-      const data = await fetchInterviews({ sellerId: sid });
+      const result = await loadMyProgramacao();
+      const data = result.interviews as Interview[];
       console.log("[MinhaProgramacao] debug", {
         userId,
         sellerIdFromHook: sellerId,
-        sidUsadoNaQuery: sid,
+        sellerIdFromServer: result.sellerId,
         totalRetornado: data.length,
+        camillaSellerId: result.debug.camillaSellerId,
+        camilla: result.debug.camilla,
         datas: data.map((i) => ({ id: i.id, date: i.scheduledDate, lead: i.leadName })),
       });
+      setServerSellerId(result.sellerId);
+      setDebugInfo(result.debug);
       setInterviews(data);
     } catch (e) {
       console.error(e);
+      setDebugInfo({
+        userId,
+        sellerId: sellerId ?? null,
+        interviewsCount: 0,
+        camillaSellerId: null,
+        camilla: null,
+      });
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (sellerId) reload(sellerId);
-  }, [sellerId]);
+    if (!loadingUser && userId) reload();
+    if (!loadingUser && !userId) setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadingUser, userId]);
 
   const today = todayISO();
   const tomorrow = tomorrowISO();
@@ -141,10 +174,11 @@ function MinhaProgramacao() {
     );
   }
 
-  if (!sellerId) {
+  if (!loading && !effectiveSellerId) {
     return (
       <main className="min-h-screen max-w-3xl mx-auto px-4 py-10">
         <PageHeader role={role} email={email} userId={userId} />
+        <DebugPanel debugInfo={debugInfo} sellerIdFromHook={sellerId} />
         <div className="mt-10 rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">
           Seu usuário ainda não está vinculado a um vendedor. Peça ao administrador para fazer o
           vínculo na tela de ranking.
@@ -159,7 +193,7 @@ function MinhaProgramacao() {
     } else {
       await createInterview(input);
     }
-    await reload(sellerId);
+    await reload();
   };
 
   const canEditAll =
@@ -173,6 +207,8 @@ function MinhaProgramacao() {
         <h1 className="font-display font-black text-2xl md:text-3xl mb-1">Minha Programação</h1>
         <p className="text-sm text-muted-foreground">Sua agenda pessoal de entrevistas.</p>
       </section>
+
+      <DebugPanel debugInfo={debugInfo} sellerIdFromHook={sellerId} />
 
       <section className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
         {cards.map((c) => (
@@ -210,7 +246,7 @@ function MinhaProgramacao() {
           setCreating(false);
           setEditing(i);
         }}
-        onDelete={canEditAll ? async (id) => { await deleteInterview(id); await reload(sellerId); } : undefined}
+        onDelete={canEditAll ? async (id) => { await deleteInterview(id); await reload(); } : undefined}
         emptyHint="Nenhuma entrevista para hoje."
       />
 
@@ -225,7 +261,7 @@ function MinhaProgramacao() {
           setCreating(false);
           setEditing(i);
         }}
-        onDelete={canEditAll ? async (id) => { await deleteInterview(id); await reload(sellerId); } : undefined}
+        onDelete={canEditAll ? async (id) => { await deleteInterview(id); await reload(); } : undefined}
         emptyHint="Nenhuma entrevista para amanhã."
       />
 
@@ -260,7 +296,7 @@ function MinhaProgramacao() {
               canEditAll
                 ? async (id) => {
                     await deleteInterview(id);
-                    await reload(sellerId);
+                    await reload();
                   }
                 : undefined
             }
@@ -278,11 +314,48 @@ function MinhaProgramacao() {
           }
         }}
         initial={editing}
-        defaultSellerId={sellerId}
+        defaultSellerId={effectiveSellerId ?? ""}
         canEditAll={canEditAll}
         onSave={handleSave}
       />
     </main>
+  );
+}
+
+function DebugPanel({
+  debugInfo,
+  sellerIdFromHook,
+}: {
+  debugInfo: {
+    userId: string | null;
+    sellerId: string | null;
+    interviewsCount: number;
+    camillaSellerId: string | null;
+    camilla: {
+      id: string;
+      sellerId: string;
+      leadName: string;
+      scheduledDate: string;
+      scheduledTime: string;
+      status: string;
+    } | null;
+  } | null;
+  sellerIdFromHook: string | null;
+}) {
+  return (
+    <details className="mb-6 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-xs text-foreground">
+      <summary className="cursor-pointer font-semibold">Debug temporário — Minha Programação</summary>
+      <div className="mt-3 grid gap-1 font-mono text-[11px] text-muted-foreground">
+        <div>userId logado: {debugInfo?.userId ?? "—"}</div>
+        <div>sellerId do useCurrentUser: {sellerIdFromHook ?? "—"}</div>
+        <div>sellerId usado na programação: {debugInfo?.sellerId ?? "—"}</div>
+        <div>quantidade retornada: {debugInfo?.interviewsCount ?? 0}</div>
+        <div>seller_id da Camilla: {debugInfo?.camillaSellerId ?? "não encontrada"}</div>
+        <div>
+          Camilla: {debugInfo?.camilla ? `${debugInfo.camilla.scheduledDate} ${debugInfo.camilla.scheduledTime} • ${debugInfo.camilla.status}` : "não encontrada"}
+        </div>
+      </div>
+    </details>
   );
 }
 
